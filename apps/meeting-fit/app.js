@@ -591,7 +591,7 @@ function showTab(which) {
    Example team
    ============================================================ */
 
-function loadExample() {
+function loadExample(quiet = false) {
   // level order matches model.json: wonder, invention, discernment, galvanizing, enablement, tenacity
   const people = [
     ['You',     'cggffc'],   // Invention + Discernment;  drained by Galvanizing + Enablement
@@ -609,14 +609,14 @@ function loadExample() {
   const pick = ['You', 'Dev', 'Anne'];
   state.meeting.attendees = state.team.filter((p) => pick.includes(p.name)).map((p) => p.id);
 
-  if (!state.meeting.title.trim() && !state.meeting.outcome.trim()) {
+  if (quiet || (!state.meeting.title.trim() && !state.meeting.outcome.trim())) {
     state.meeting.title = '2040 portfolio review';
     state.meeting.outcome = 'Decide which two concepts go forward, and get the chief engineer to commit resourcing.';
     state.touchedTypes = false;
   }
 
   save(); renderRoster(); renderTeamViz(); renderMeeting();
-  toast(`Example loaded — ${state.team.length} people`);
+  if (!quiet) toast(`Example loaded — ${state.team.length} people`);
 }
 
 /* ============================================================
@@ -762,6 +762,12 @@ fetch('./model.json')
     renderRoster();
     renderTeamViz();
     renderMe();
+
+    // demo build: always boot into the worked example, never a stale session
+    if (window.__DEMO__) {
+      window.__resetDemo = () => loadExample(true);
+      window.__resetDemo();
+    }
 
     document.getElementById('modelNote').textContent = m.note;
   })
