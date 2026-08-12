@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sandbox</title>
+<meta name="description" content="A small hosting space for working programs and tests.">
+<meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f9f9f7" media="(prefers-color-scheme: light)">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="stylesheet" href="./assets/shell.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="topbar">
+    <div class="mark" aria-hidden="true"></div>
+    <div>
+      <h1>Sandbox</h1>
+      <p class="crumb">peterjslee-coder</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="iconbtn" id="themeToggle" type="button">Dark</button>
+  </header>
+
+  <p class="lede" id="tagline"></p>
+
+  <h2 class="section-title">Programs</h2>
+  <div class="app-grid" id="appGrid"></div>
+
+  <p class="footnote">
+    Static site, no server and no database — everything runs in the browser on the
+    device that opened it. Anything you enter stays on that device unless you
+    deliberately copy a share link. When a program outgrows that, it graduates to a
+    real backend.
+  </p>
+
+</div>
+
+<script type="module">
+import { initTheme, registerSW, el } from './assets/shell.js';
+
+initTheme();
+registerSW('./sw.js');
+
+const grid = document.getElementById('appGrid');
+
+fetch('./apps.json')
+  .then((r) => r.json())
+  .then((cfg) => {
+    document.getElementById('tagline').textContent = cfg.tagline;
+
+    for (const app of cfg.apps) {
+      grid.append(el('a', { class: 'app-card', href: `./apps/${app.slug}/` }, [
+        el('div', { class: 'name', text: app.name }),
+        el('div', { class: 'desc', text: app.desc }),
+        el('div', { class: 'meta', text: `${app.status} · added ${app.added}` }),
+      ]));
+    }
+
+    grid.append(el('div', { class: 'app-card stub' }, [
+      el('div', { class: 'name', text: 'Next one' }),
+      el('div', {
+        class: 'desc',
+        text: 'Drop a folder in /apps, add one line to apps.json, push. That is the whole ceremony.',
+      }),
+      el('div', { class: 'meta', text: 'empty slot' }),
+    ]));
+  })
+  .catch(() => {
+    grid.append(el('div', { class: 'card', text: 'Could not load the program list.' }));
+  });
+</script>
+</body>
+</html>

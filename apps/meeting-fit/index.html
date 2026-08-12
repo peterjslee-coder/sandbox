@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meeting Fit — Sandbox</title>
+<meta name="description" content="Check whether a meeting matches the strengths of the people in it, before it happens.">
+<meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f9f9f7" media="(prefers-color-scheme: light)">
+<link rel="manifest" href="../../manifest.webmanifest">
+<link rel="icon" href="../../icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../icons/icon-192.png">
+<link rel="stylesheet" href="../../assets/shell.css">
+<link rel="stylesheet" href="./app.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="topbar">
+    <div class="mark" aria-hidden="true"></div>
+    <div>
+      <h1>Meeting Fit</h1>
+      <p class="crumb"><a href="../../">Sandbox</a> · does this meeting match the room</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="iconbtn" id="themeToggle" type="button">Dark</button>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-meeting" aria-controls="panel-meeting" aria-selected="true">Meeting</button>
+    <button class="tab" role="tab" id="tab-team"    aria-controls="panel-team"    aria-selected="false">Team <span class="count" id="teamCount">0</span></button>
+    <button class="tab" role="tab" id="tab-me"      aria-controls="panel-me"      aria-selected="false">My profile</button>
+  </div>
+
+  <!-- ===================== MEETING ===================== -->
+  <section class="panel" id="panel-meeting" role="tabpanel" aria-labelledby="tab-meeting">
+    <div class="cols">
+
+      <div class="stack">
+        <div class="card">
+          <h2 class="section-title">Define the meeting</h2>
+
+          <label class="field">
+            <span>Title</span>
+            <input type="text" id="mTitle" placeholder="2040 portfolio review" autocomplete="off">
+          </label>
+
+          <label class="field">
+            <span>Intended outcome</span>
+            <textarea id="mOutcome" rows="3" placeholder="Decide which two concepts go forward, and get the chief engineer to commit resourcing."></textarea>
+            <p class="hint">Write it as the thing that is true when the meeting ends. The type suggestions below read this text.</p>
+          </label>
+
+          <h2 class="section-title" style="margin-top:22px">What this meeting needs</h2>
+          <div class="typegrid" id="typePicker"></div>
+          <p class="hint" id="sugNote" style="font-size:12px;color:var(--text-muted);margin:10px 0 0;line-height:1.5"></p>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">Who is in the room</h2>
+          <div id="attendeePicker"></div>
+        </div>
+      </div>
+
+      <div class="stack" id="verdictCol"></div>
+
+    </div>
+  </section>
+
+  <!-- ===================== TEAM ===================== -->
+  <section class="panel" id="panel-team" role="tabpanel" aria-labelledby="tab-team" hidden>
+    <div class="cols">
+
+      <div class="stack">
+        <div class="card">
+          <h2 class="section-title">Add someone</h2>
+          <label class="field">
+            <span>Paste a profile code</span>
+            <input type="text" id="pasteCode" placeholder="Ada~gcfcgf…" autocomplete="off">
+            <p class="hint">Send teammates this page's <strong>My profile</strong> tab. They fill it in, copy their code, send it back. Nothing leaves their device but the code.</p>
+          </label>
+          <div class="row">
+            <button class="btn" id="addCodeBtn" type="button">Add to team</button>
+            <button class="btn ghost" id="manualBtn" type="button">Enter manually</button>
+          </div>
+          <div id="manualWrap" hidden style="margin-top:18px"></div>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">Team <span id="teamCount2" style="color:var(--text-muted)"></span></h2>
+          <div id="roster"></div>
+          <div class="row" style="margin-top:16px">
+            <button class="btn ghost" id="shareTeamBtn" type="button">Copy team link</button>
+            <button class="btn ghost" id="demoBtn" type="button">Load example team</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack" id="teamViz"></div>
+
+    </div>
+  </section>
+
+  <!-- ===================== MY PROFILE ===================== -->
+  <section class="panel" id="panel-me" role="tabpanel" aria-labelledby="tab-me" hidden>
+    <div class="cols">
+      <div class="card">
+        <h2 class="section-title">Your results</h2>
+        <label class="field">
+          <span>Name</span>
+          <input type="text" id="meName" placeholder="How you want to show up on the map" autocomplete="off">
+        </label>
+        <div id="meLevels"></div>
+        <p class="tally" id="meTally" style="margin-top:12px"></p>
+        <div class="row" style="margin-top:14px">
+          <button class="btn" id="meCopyBtn" type="button" disabled>Copy my code</button>
+          <button class="btn ghost" id="meAddBtn" type="button" disabled>Add me to this team</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">Your code</h2>
+        <div class="code-out" id="meCode">Fill in two of each above.</div>
+        <p class="hint" style="font-size:12.5px;color:var(--text-muted);margin-top:14px;line-height:1.6">
+          This is just your name and your six letters, packed small. Send it to whoever is
+          building the team map. It carries nothing else — no email, no account, no scores.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <p class="footnote" id="modelNote"></p>
+
+</div>
+
+<div class="toast" id="toast"></div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>

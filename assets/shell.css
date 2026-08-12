@@ -1,0 +1,272 @@
+/* ============================================================
+   Sandbox shell — shared tokens + primitives for every mini-app.
+   Add an app: reuse these tokens, don't redefine colors locally.
+   ============================================================ */
+
+:root {
+  color-scheme: light;
+
+  /* planes & ink */
+  --plane:            #f9f9f7;
+  --surface-1:        #fcfcfb;
+  --surface-2:        #f2f1ed;
+  --text-primary:     #0b0b0b;
+  --text-secondary:   #52514e;
+  --text-muted:       #898781;
+  --gridline:         #e1e0d9;
+  --baseline:         #c3c2b7;
+  --border:           rgba(11, 11, 11, 0.10);
+
+  /* categorical slot 1 — the only series hue this app needs */
+  --series-1:         #2a78d6;
+
+  /* sequential blue ramp (ordinal-safe steps on light: >= 250) */
+  --seq-250:          #86b6ef;
+  --seq-400:          #3987e5;
+  --seq-500:          #256abf;
+
+  /* diverging: blue <-> red, neutral gray midpoint */
+  --div-pos:          #2a78d6;
+  --div-mid:          #f0efec;
+  --div-neg:          #e34948;
+  --div-pos-ink:      #ffffff;
+  --div-mid-ink:      #52514e;
+  --div-neg-ink:      #ffffff;
+
+  /* status — reserved, never reused as a series color */
+  --status-good:      #0ca30c;
+  --status-warning:   #fab219;
+  --status-serious:   #ec835a;
+  --status-critical:  #d03b3b;
+
+  --radius:           14px;
+  --radius-sm:        9px;
+  --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --plane:          #0d0d0d;
+    --surface-1:      #1a1a19;
+    --surface-2:      #222220;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255, 255, 255, 0.10);
+    --series-1:       #3987e5;
+    --seq-250:        #184f95;
+    --seq-400:        #256abf;
+    --seq-500:        #3987e5;
+    --div-pos:        #3987e5;
+    --div-mid:        #383835;
+    --div-neg:        #e66767;
+    --div-pos-ink:    #ffffff;
+    --div-mid-ink:    #c3c2b7;
+    --div-neg-ink:    #1a1a19;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --plane:            #0d0d0d;
+  --surface-1:        #1a1a19;
+  --surface-2:        #222220;
+  --text-primary:     #ffffff;
+  --text-secondary:   #c3c2b7;
+  --text-muted:       #898781;
+  --gridline:         #2c2c2a;
+  --baseline:         #383835;
+  --border:           rgba(255, 255, 255, 0.10);
+  --series-1:         #3987e5;
+  --seq-250:          #184f95;
+  --seq-400:          #256abf;
+  --seq-500:          #3987e5;
+  --div-pos:          #3987e5;
+  --div-mid:          #383835;
+  --div-neg:          #e66767;
+  --div-pos-ink:      #ffffff;
+  --div-mid-ink:      #c3c2b7;
+  --div-neg-ink:      #1a1a19;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--plane);
+  color: var(--text-primary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  text-size-adjust: 100%;
+}
+
+body { min-height: 100dvh; }
+
+a { color: inherit; }
+
+.wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 20px 80px;
+}
+
+/* ---------- top bar ---------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 22px;
+  margin-bottom: 26px;
+  border-bottom: 1px solid var(--gridline);
+}
+
+.topbar .mark {
+  width: 26px; height: 26px; flex: none;
+  border-radius: 7px;
+  background: var(--series-1);
+}
+
+.topbar h1 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.topbar .crumb {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.topbar .spacer { flex: 1; }
+
+.iconbtn {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  color: var(--text-secondary);
+  border-radius: 8px;
+  height: 32px;
+  padding: 0 11px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.iconbtn:hover { color: var(--text-primary); border-color: var(--baseline); }
+
+/* ---------- generic pieces ---------- */
+
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.section-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 14px;
+}
+
+.lede {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin: 0 0 26px;
+  max-width: 62ch;
+}
+
+.btn {
+  appearance: none;
+  border: 1px solid transparent;
+  background: var(--series-1);
+  color: #fff;
+  border-radius: 9px;
+  height: 38px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 550;
+  cursor: pointer;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn.ghost {
+  background: var(--surface-1);
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+.btn.ghost:hover { color: var(--text-primary); border-color: var(--baseline); filter: none; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* status chip — colour never travels alone; icon + label always ride with it */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 9px 3px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.chip .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.chip.good     .dot { background: var(--status-good); }
+.chip.warning  .dot { background: var(--status-warning); }
+.chip.serious  .dot { background: var(--status-serious); }
+.chip.critical .dot { background: var(--status-critical); }
+
+/* ---------- hub grid ---------- */
+
+.app-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 14px;
+}
+
+.app-card {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  text-decoration: none;
+  color: inherit;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  transition: border-color 0.14s ease, transform 0.14s ease;
+}
+.app-card:hover { border-color: var(--series-1); transform: translateY(-1px); }
+.app-card.stub { opacity: 0.55; pointer-events: none; }
+
+.app-card .name { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+.app-card .desc { font-size: 13px; line-height: 1.5; color: var(--text-secondary); }
+.app-card .meta {
+  margin-top: auto; padding-top: 8px;
+  font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.footnote {
+  margin-top: 34px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 70ch;
+}
+
+@media (max-width: 640px) {
+  .wrap { padding: 20px 15px 64px; }
+}

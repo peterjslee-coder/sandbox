@@ -1,0 +1,13 @@
+{
+  "title": "Sandbox",
+  "tagline": "A place to put working programs on the open web, test them with a few people, and throw away the ones that don't earn their keep.",
+  "apps": [
+    {
+      "slug": "meeting-fit",
+      "name": "Meeting Fit",
+      "desc": "A director writes the meeting title, the intended outcome, and what the meeting needs. The app checks it against the strengths of the people invited and names the gap before the meeting happens.",
+      "status": "live",
+      "added": "2026-08"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "id": "six-type",
+  "label": "Six work types",
+  "note": "Type names are the labels from the assessment your team already took. This tool stores and reads results — it does not assess anyone. Swap this file to point the same engine at a different model.",
+  "perPerson": { "g": 2, "c": 2, "f": 2 },
+
+  "levels": [
+    { "id": "g", "name": "Genius", "short": "G", "desc": "Energising — they gain fuel doing it" },
+    { "id": "c", "name": "Competency", "short": "C", "desc": "Capable, but it costs them over time" },
+    { "id": "f", "name": "Frustration", "short": "F", "desc": "Draining, and where they are genuinely weak" }
+  ],
+
+  "phases": [
+    { "id": "ideation", "name": "Ideation", "desc": "Naming the problem and producing an answer" },
+    { "id": "activation", "name": "Activation", "desc": "Judging what is worth doing and getting people to move" },
+    { "id": "implementation", "name": "Implementation", "desc": "Supporting the work and carrying it to done" }
+  ],
+
+  "types": [
+    { "id": "wonder", "name": "Wonder", "short": "Wo", "phase": "ideation", "desc": "Sitting in the question — noticing something could be better before anyone asks" },
+    { "id": "invention", "name": "Invention", "short": "In", "phase": "ideation", "desc": "Producing an answer from a blank page" },
+    { "id": "discernment", "name": "Discernment", "short": "Di", "phase": "activation", "desc": "Judging which answers are any good, on incomplete information" },
+    { "id": "galvanizing", "name": "Galvanizing", "short": "Ga", "phase": "activation", "desc": "Getting other people to move on it" },
+    { "id": "enablement", "name": "Enablement", "short": "En", "phase": "implementation", "desc": "Responding to what others need, on their timeline" },
+    { "id": "tenacity", "name": "Tenacity", "short": "Te", "phase": "implementation", "desc": "Carrying it to done, at the standard promised" }
+  ],
+
+  "handoffs": [
+    {
+      "id": "h1",
+      "from": "ideation",
+      "to": "activation",
+      "name": "Ideation → Activation",
+      "symptom": "Good thinking that nobody decides on, and nobody picks up."
+    },
+    {
+      "id": "h2",
+      "from": "activation",
+      "to": "implementation",
+      "name": "Activation → Implementation",
+      "symptom": "Decisions that get made with enthusiasm and then never land."
+    }
+  ]
+}
