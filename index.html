@@ -53,7 +53,7 @@ fetch('./apps.json')
     document.getElementById('tagline').textContent = cfg.tagline;
 
     for (const app of cfg.apps) {
-      grid.append(el('a', { class: 'app-card', href: `./apps/${app.slug}/` }, [
+      grid.append(el('a', { class: 'app-card', href: app.href || `./apps/${app.slug}/` }, [
         el('div', { class: 'name', text: app.name }),
         el('div', { class: 'desc', text: app.desc }),
         el('div', { class: 'meta', text: `${app.status} · added ${app.added}` }),
