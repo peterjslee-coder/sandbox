@@ -457,23 +457,61 @@ function renderMeetingList() {
   }
 }
 
+// The shape is a choice the organizer made, stored on the meeting — not an
+// inference from whatever types happen to be ticked. Editing a type below
+// adjusts the shape; it does not silently throw it away.
+const matchesShape = (m, arch) => arch.types.length === (m.required || []).length
+  && arch.types.every((t) => m.required.includes(t));
+
 function renderArchetypes() {
   const host = document.getElementById('archetypes');
+  const note = document.getElementById('archNote');
   host.replaceChildren();
+  note.replaceChildren();
   const m = current();
   if (!m) return;
+
   for (const arch of MODEL.archetypes) {
-    const on = arch.types.length === (m.required || []).length
-      && arch.types.every((t) => m.required.includes(t));
+    const chosen = m.archetype === arch.id;
     host.append(el('button', {
-      class: 'arch', type: 'button', 'aria-pressed': String(on),
-      title: `${arch.example} — usually led by ${typeById(arch.lead).name}`,
-      onclick: () => { m.required = [...arch.types]; m.touched = true; save(); renderMeeting(); },
+      class: 'arch', type: 'button', 'aria-pressed': String(chosen),
+      title: `${arch.example} — ${arch.types.map((t) => typeById(t).name).join(', ')}. Usually led by ${typeById(arch.lead).name}.`,
+      onclick: () => {
+        if (m.archetype === arch.id) {
+          m.archetype = null;                    // tapping the chosen one clears it
+        } else {
+          m.archetype = arch.id;
+          m.required = [...arch.types];
+        }
+        m.touched = true;
+        save();
+        renderMeeting();
+      },
     }, [
-      el('div', { class: 'a-n', text: arch.name }),
-      el('div', { class: 'a-a', text: arch.altLabel }),
+      el('div', { class: 'a-n' }, [
+        arch.name,
+        chosen && !matchesShape(m, arch) ? el('span', { class: 'a-adj', text: 'adjusted' }) : null,
+      ]),
+      el('div', { class: 'a-a', text: `${arch.altLabel} · ${arch.types.map((t) => typeById(t).short).join(' ')}` }),
     ]));
   }
+
+  const chosen = MODEL.archetypes.find((x) => x.id === m.archetype);
+  if (!chosen) {
+    note.textContent = 'No shape set — the types below are whatever you or the outcome text put there.';
+    return;
+  }
+  if (matchesShape(m, chosen)) {
+    note.textContent = `${chosen.name} — ${chosen.example.toLowerCase()}.`;
+    return;
+  }
+  note.append(
+    `${chosen.name}, adjusted. You have changed the types away from the default set. `,
+    el('button', {
+      class: 'linkbtn', type: 'button', text: `Put ${chosen.name} back`,
+      onclick: () => { m.required = [...chosen.types]; save(); renderMeeting(); },
+    }),
+  );
 }
 
 function renderTypePicker() {
@@ -1533,7 +1571,7 @@ function renderAll() {
 
 function newMeeting(patch = {}) {
   return {
-    id: uid('m'), title: '', outcome: '', required: [], attendees: [], mode: 'intent',
+    id: uid('m'), title: '', outcome: '', required: [], attendees: [], mode: 'intent', archetype: null,
     date: isoDate(new Date()), minutes: 60, touched: false, debriefs: {}, ...patch,
   };
 }

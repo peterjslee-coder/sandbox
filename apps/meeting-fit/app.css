@@ -567,3 +567,15 @@ details.tableview[open] summary::before { content: '▾ '; }
 @media (min-width: 900px) {
   .mb-actions .btn { flex: 0 0 auto; }
 }
+
+/* the shape is sticky; it can be adjusted without being lost */
+.arch .a-n { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.a-adj {
+  font-size: 9.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--status-warning);
+}
+.linkbtn {
+  appearance: none; border: none; background: none; padding: 0; cursor: pointer;
+  font: inherit; font-size: inherit; color: var(--series-1); text-decoration: underline;
+  text-underline-offset: 2px;
+}
