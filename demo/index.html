@@ -827,6 +827,48 @@ details.tableview[open] summary::before { content: '▾ '; }
 }
 @media (min-width: 900px) { .helpbtn { width: 32px; min-height: 32px; font-size: 14px; } }
 
+/* ---------- the meeting anchor: what am I looking at, and can I change it ---------- */
+
+.meetingbar {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 15px 16px 14px;
+  margin-bottom: 14px;
+}
+.mb-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 7px; }
+.mb-tag {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--text-muted);
+}
+.mb-title {
+  font-size: 21px; font-weight: 640; letter-spacing: -0.02em;
+  line-height: 1.2; margin: 0;
+}
+.mb-title.untitled { color: var(--text-muted); font-weight: 550; }
+.mb-meta { font-size: 12.5px; color: var(--text-muted); margin-top: 5px; }
+.mb-intent {
+  font-size: 13.5px; line-height: 1.5; color: var(--text-secondary);
+  margin-top: 9px; padding-left: 11px; border-left: 2px solid var(--series-1);
+}
+.mb-intent.none { border-left-color: var(--baseline); color: var(--text-muted); font-style: italic; }
+.mb-actions { display: flex; gap: 8px; margin-top: 13px; flex-wrap: wrap; }
+.mb-actions .btn { flex: 1 1 auto; min-width: 132px; }
+
+.mb-listwrap { margin-top: 12px; border-top: 1px solid var(--gridline); padding-top: 4px; }
+.mb-listwrap[hidden] { display: none; }
+
+/* a brief highlight so "Edit" visibly lands somewhere */
+@keyframes cardping {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--series-1) 60%, transparent); }
+  100% { box-shadow: 0 0 0 12px transparent; }
+}
+.card.ping { animation: cardping 0.9s ease-out 1; border-color: var(--series-1); }
+
+@media (min-width: 900px) {
+  .mb-actions .btn { flex: 0 0 auto; }
+}
+
 </style>
 </head>
 <body>
@@ -853,19 +895,17 @@ details.tableview[open] summary::before { content: '▾ '; }
 
   <!-- ===================== MEETING ===================== -->
   <section class="panel" id="panel-meeting" role="tabpanel" aria-labelledby="tab-meeting">
+
+    <div id="meetingBar"></div>
+
     <div class="cols">
 
       <div class="stack">
-        <div class="card">
+        <div class="card" id="defineCard">
           <div class="card-head">
-            <h2 class="section-title" style="margin:0">Meetings</h2>
-            <button class="btn ghost sm" id="newMeetingBtn" type="button">New</button>
+            <h2 class="section-title" style="margin:0">Define the meeting</h2>
+            <button class="btn ghost sm" id="newMeetingBtn2" type="button">+ New</button>
           </div>
-          <div id="meetingList"></div>
-        </div>
-
-        <div class="card">
-          <h2 class="section-title">Define the meeting</h2>
 
           <label class="field">
             <span>Title</span>
@@ -1463,8 +1503,94 @@ function verdictSentence(a) {
    Meeting panel
    ============================================================ */
 
+// The anchor at the top of the tab: which meeting am I looking at, who defined
+// it, and how do I change it or start another. Everything below is downstream
+// of this, so it cannot be buried under the read.
+function renderMeetingBar() {
+  const host = document.getElementById('meetingBar');
+  host.replaceChildren();
+  const m = current();
+
+  const bar = el('div', { class: 'meetingbar' });
+  bar.append(el('div', { class: 'mb-top' }, [
+    el('span', { class: 'mb-tag', text: m ? 'Meeting you are looking at' : 'No meeting yet' }),
+    el('button', {
+      class: 'btn ghost sm', type: 'button', text: '+ New',
+      onclick: () => startNewMeeting(),
+    }),
+  ]));
+
+  if (!m) {
+    bar.append(el('p', {
+      style: 'font-size:14px;line-height:1.55;margin:0;color:var(--text-secondary)',
+      text: 'Start one and the read builds itself as you fill it in.',
+    }));
+    bar.append(el('div', { class: 'mb-actions' }, [
+      el('button', { class: 'btn', type: 'button', text: 'Set up a meeting', onclick: () => startNewMeeting() }),
+    ]));
+    host.append(bar);
+    return;
+  }
+
+  bar.append(el('h2', {
+    class: 'mb-title' + (m.title.trim() ? '' : ' untitled'),
+    text: m.title.trim() || 'Untitled meeting',
+  }));
+  bar.append(el('div', {
+    class: 'mb-meta',
+    text: [m.date || 'no date', fmtMins(m.minutes || 60), `${m.attendees.length} in the room`].join(' · '),
+  }));
+  bar.append(el('div', {
+    class: 'mb-intent' + (m.outcome.trim() ? '' : ' none'),
+    text: m.outcome.trim() ? `“${m.outcome.trim()}”` : 'No intended outcome written yet — that is what the read is measured against.',
+  }));
+
+  const listWrap = el('div', { class: 'mb-listwrap', hidden: 'hidden' }, [el('div', { id: 'meetingList' })]);
+  const toggle = el('button', {
+    class: 'btn ghost', type: 'button',
+    text: `All meetings (${state.meetings.length})`,
+    onclick: () => {
+      listWrap.hidden = !listWrap.hidden;
+      toggle.textContent = listWrap.hidden ? `All meetings (${state.meetings.length})` : 'Hide list';
+    },
+  });
+
+  bar.append(el('div', { class: 'mb-actions' }, [
+    el('button', {
+      class: 'btn', type: 'button', text: 'Edit this meeting',
+      onclick: () => jumpToDefine(),
+    }),
+    toggle,
+  ]));
+  bar.append(listWrap);
+  host.append(bar);
+}
+
+function jumpToDefine() {
+  const card = document.getElementById('defineCard');
+  if (!card) return;
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  card.classList.remove('ping');
+  void card.offsetWidth;
+  card.classList.add('ping');
+  setTimeout(() => document.getElementById('mTitle')?.focus({ preventScroll: true }), 380);
+}
+
+function startNewMeeting() {
+  const m = newMeeting();
+  state.meetings.push(m);
+  state.currentId = m.id;
+  save();
+  showTab('meeting');
+  renderMeeting();
+  renderDebrief();
+  jumpToDefine();
+  toast('New meeting — give it a title and an intended outcome');
+}
+
 function renderMeetingList() {
   const host = document.getElementById('meetingList');
+  if (!host) return;
   host.replaceChildren();
   if (!state.meetings.length) {
     host.append(el('div', { class: 'empty', text: 'No meetings yet. Hit New, or load the example on the Team tab.' }));
@@ -1476,7 +1602,7 @@ function renderMeetingList() {
     const gaps = a.required.length && a.inRoom.length ? a.gaps.length : null;
     host.append(el('div', {
       class: 'meeting-item' + (m.id === state.currentId ? ' sel' : ''),
-      onclick: () => { state.currentId = m.id; save(); renderMeeting(); renderDebrief(); },
+      onclick: () => { state.currentId = m.id; save(); renderMeeting(); renderDebrief(); window.scrollTo({ top: 0, behavior: 'smooth' }); },
     }, [
       el('div', {}, [
         el('div', { class: 'mi-t', text: m.title || 'Untitled meeting' }),
@@ -1842,6 +1968,7 @@ function renderMeeting() {
   document.getElementById('mOutcome').value = m ? m.outcome : '';
   document.getElementById('mDate').value = m ? (m.date || '') : '';
   document.getElementById('mMinutes').value = m ? String(m.minutes || 60) : '60';
+  renderMeetingBar();
   renderMeetingList();
   renderArchetypes();
   renderTypePicker();
@@ -2670,6 +2797,7 @@ function bindMeetingField(elmId, apply) {
     if (!m) return;
     apply(m, e.target.value);
     save();
+    renderMeetingBar();
     renderMeetingList();
     if (elmId === 'mOutcome') { renderTypePicker(); renderVerdict(); }
     if (elmId === 'mMinutes' || elmId === 'mDate') renderLoad();
@@ -2684,16 +2812,10 @@ function wire() {
   bindMeetingField('mDate', (m, v) => { m.date = v; });
   document.getElementById('mMinutes').addEventListener('change', (e) => {
     const m = current(); if (!m) return;
-    m.minutes = Number(e.target.value); save(); renderMeetingList(); renderLoad();
+    m.minutes = Number(e.target.value); save(); renderMeetingBar(); renderMeetingList(); renderLoad();
   });
 
-  document.getElementById('newMeetingBtn').addEventListener('click', () => {
-    const m = newMeeting({ title: 'New meeting' });
-    state.meetings.push(m);
-    state.currentId = m.id;
-    save(); renderMeeting(); renderDebrief();
-    document.getElementById('mTitle').focus();
-  });
+  document.getElementById('newMeetingBtn2').addEventListener('click', () => startNewMeeting());
 
   document.getElementById('meName').addEventListener('input', (e) => { state.me.name = e.target.value; save(); renderMe(); });
 
@@ -2832,6 +2954,8 @@ Promise.resolve(MODEL_INLINE)
     importFromHash();
     wire();
 
+    window.__startNewMeeting = startNewMeeting;
+
     if (window.__DEMO__) {
       window.__resetDemo = () => { loadExample(true); showTab('meeting'); };
       window.__resetDemo();
@@ -2858,12 +2982,17 @@ Promise.resolve(MODEL_INLINE)
       This will help you frame what gaps may exist based on the intent that you have stated.
     </p>
     <p>
-      Everything behind this is live. You are viewing as the person running the team &mdash;
-      the <strong>Viewing as</strong> strip on the Load and Debrief tabs shows whose view
-      you are in, and lets you switch.
+      Everything behind this is live and yours to change. The meeting at the top of the
+      Meeting tab was defined by someone &mdash; edit it, or start your own with your real
+      meeting and pick from the teammates listed.
+    </p>
+    <p>
+      You are viewing as the person running the team. The <strong>Viewing as</strong> strip
+      on the Load and Debrief tabs shows whose view you are in, and lets you switch.
     </p>
     <p class="soon">This can be operational with real data for the SSG in a few days.</p>
-    <button class="btn" type="button" id="demoModalClose">Got it</button>
+    <button class="btn" type="button" id="demoModalClose">Show me the example</button>
+    <button class="btn ghost" type="button" id="demoModalOwn" style="width:100%;margin-top:8px">Set up my own meeting</button>
     <button class="btn ghost" type="button" id="demoModalReset" style="width:100%;margin-top:8px">Reset the demo data</button>
   </div>
 </div>
@@ -2885,6 +3014,10 @@ Promise.resolve(MODEL_INLINE)
   if (seen) { scrim.hidden = true; } else { open(); }
 
   document.getElementById('demoModalClose').addEventListener('click', close);
+  document.getElementById('demoModalOwn').addEventListener('click', function () {
+    close();
+    if (window.__startNewMeeting) setTimeout(window.__startNewMeeting, 220);
+  });
   document.getElementById('demoModalReset').addEventListener('click', function () {
     if (window.__resetDemo) window.__resetDemo();
     close();

@@ -342,8 +342,94 @@ function verdictSentence(a) {
    Meeting panel
    ============================================================ */
 
+// The anchor at the top of the tab: which meeting am I looking at, who defined
+// it, and how do I change it or start another. Everything below is downstream
+// of this, so it cannot be buried under the read.
+function renderMeetingBar() {
+  const host = document.getElementById('meetingBar');
+  host.replaceChildren();
+  const m = current();
+
+  const bar = el('div', { class: 'meetingbar' });
+  bar.append(el('div', { class: 'mb-top' }, [
+    el('span', { class: 'mb-tag', text: m ? 'Meeting you are looking at' : 'No meeting yet' }),
+    el('button', {
+      class: 'btn ghost sm', type: 'button', text: '+ New',
+      onclick: () => startNewMeeting(),
+    }),
+  ]));
+
+  if (!m) {
+    bar.append(el('p', {
+      style: 'font-size:14px;line-height:1.55;margin:0;color:var(--text-secondary)',
+      text: 'Start one and the read builds itself as you fill it in.',
+    }));
+    bar.append(el('div', { class: 'mb-actions' }, [
+      el('button', { class: 'btn', type: 'button', text: 'Set up a meeting', onclick: () => startNewMeeting() }),
+    ]));
+    host.append(bar);
+    return;
+  }
+
+  bar.append(el('h2', {
+    class: 'mb-title' + (m.title.trim() ? '' : ' untitled'),
+    text: m.title.trim() || 'Untitled meeting',
+  }));
+  bar.append(el('div', {
+    class: 'mb-meta',
+    text: [m.date || 'no date', fmtMins(m.minutes || 60), `${m.attendees.length} in the room`].join(' · '),
+  }));
+  bar.append(el('div', {
+    class: 'mb-intent' + (m.outcome.trim() ? '' : ' none'),
+    text: m.outcome.trim() ? `“${m.outcome.trim()}”` : 'No intended outcome written yet — that is what the read is measured against.',
+  }));
+
+  const listWrap = el('div', { class: 'mb-listwrap', hidden: 'hidden' }, [el('div', { id: 'meetingList' })]);
+  const toggle = el('button', {
+    class: 'btn ghost', type: 'button',
+    text: `All meetings (${state.meetings.length})`,
+    onclick: () => {
+      listWrap.hidden = !listWrap.hidden;
+      toggle.textContent = listWrap.hidden ? `All meetings (${state.meetings.length})` : 'Hide list';
+    },
+  });
+
+  bar.append(el('div', { class: 'mb-actions' }, [
+    el('button', {
+      class: 'btn', type: 'button', text: 'Edit this meeting',
+      onclick: () => jumpToDefine(),
+    }),
+    toggle,
+  ]));
+  bar.append(listWrap);
+  host.append(bar);
+}
+
+function jumpToDefine() {
+  const card = document.getElementById('defineCard');
+  if (!card) return;
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  card.classList.remove('ping');
+  void card.offsetWidth;
+  card.classList.add('ping');
+  setTimeout(() => document.getElementById('mTitle')?.focus({ preventScroll: true }), 380);
+}
+
+function startNewMeeting() {
+  const m = newMeeting();
+  state.meetings.push(m);
+  state.currentId = m.id;
+  save();
+  showTab('meeting');
+  renderMeeting();
+  renderDebrief();
+  jumpToDefine();
+  toast('New meeting — give it a title and an intended outcome');
+}
+
 function renderMeetingList() {
   const host = document.getElementById('meetingList');
+  if (!host) return;
   host.replaceChildren();
   if (!state.meetings.length) {
     host.append(el('div', { class: 'empty', text: 'No meetings yet. Hit New, or load the example on the Team tab.' }));
@@ -355,7 +441,7 @@ function renderMeetingList() {
     const gaps = a.required.length && a.inRoom.length ? a.gaps.length : null;
     host.append(el('div', {
       class: 'meeting-item' + (m.id === state.currentId ? ' sel' : ''),
-      onclick: () => { state.currentId = m.id; save(); renderMeeting(); renderDebrief(); },
+      onclick: () => { state.currentId = m.id; save(); renderMeeting(); renderDebrief(); window.scrollTo({ top: 0, behavior: 'smooth' }); },
     }, [
       el('div', {}, [
         el('div', { class: 'mi-t', text: m.title || 'Untitled meeting' }),
@@ -721,6 +807,7 @@ function renderMeeting() {
   document.getElementById('mOutcome').value = m ? m.outcome : '';
   document.getElementById('mDate').value = m ? (m.date || '') : '';
   document.getElementById('mMinutes').value = m ? String(m.minutes || 60) : '60';
+  renderMeetingBar();
   renderMeetingList();
   renderArchetypes();
   renderTypePicker();
@@ -1549,6 +1636,7 @@ function bindMeetingField(elmId, apply) {
     if (!m) return;
     apply(m, e.target.value);
     save();
+    renderMeetingBar();
     renderMeetingList();
     if (elmId === 'mOutcome') { renderTypePicker(); renderVerdict(); }
     if (elmId === 'mMinutes' || elmId === 'mDate') renderLoad();
@@ -1563,16 +1651,10 @@ function wire() {
   bindMeetingField('mDate', (m, v) => { m.date = v; });
   document.getElementById('mMinutes').addEventListener('change', (e) => {
     const m = current(); if (!m) return;
-    m.minutes = Number(e.target.value); save(); renderMeetingList(); renderLoad();
+    m.minutes = Number(e.target.value); save(); renderMeetingBar(); renderMeetingList(); renderLoad();
   });
 
-  document.getElementById('newMeetingBtn').addEventListener('click', () => {
-    const m = newMeeting({ title: 'New meeting' });
-    state.meetings.push(m);
-    state.currentId = m.id;
-    save(); renderMeeting(); renderDebrief();
-    document.getElementById('mTitle').focus();
-  });
+  document.getElementById('newMeetingBtn2').addEventListener('click', () => startNewMeeting());
 
   document.getElementById('meName').addEventListener('input', (e) => { state.me.name = e.target.value; save(); renderMe(); });
 
@@ -1711,6 +1793,8 @@ fetch('./model.json')
     load();
     importFromHash();
     wire();
+
+    window.__startNewMeeting = startNewMeeting;
 
     if (window.__DEMO__) {
       window.__resetDemo = () => { loadExample(true); showTab('meeting'); };
