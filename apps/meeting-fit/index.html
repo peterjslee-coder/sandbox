@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Meeting Fit — Sandbox</title>
-<meta name="description" content="Check whether a meeting matches the strengths of the people in it, before it happens.">
+<meta name="description" content="Check whether a meeting matches the strengths of the people in it — and whether the week is burning anyone out.">
 <meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f9f9f7" media="(prefers-color-scheme: light)">
 <link rel="manifest" href="../../manifest.webmanifest">
@@ -20,14 +20,20 @@
     <div class="mark" aria-hidden="true"></div>
     <div>
       <h1>Meeting Fit</h1>
-      <p class="crumb"><a href="../../">Sandbox</a> · does this meeting match the room</p>
+      <p class="crumb"><a href="../../">Sandbox</a> · does the work match the people doing it</p>
     </div>
     <div class="spacer"></div>
+    <label class="viewas">
+      <span>Viewing as</span>
+      <select id="viewerSelect"></select>
+    </label>
     <button class="iconbtn" id="themeToggle" type="button">Dark</button>
   </header>
 
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" id="tab-meeting" aria-controls="panel-meeting" aria-selected="true">Meeting</button>
+    <button class="tab" role="tab" id="tab-load"    aria-controls="panel-load"    aria-selected="false">Load</button>
+    <button class="tab" role="tab" id="tab-debrief" aria-controls="panel-debrief" aria-selected="false">Debrief</button>
     <button class="tab" role="tab" id="tab-team"    aria-controls="panel-team"    aria-selected="false">Team <span class="count" id="teamCount">0</span></button>
     <button class="tab" role="tab" id="tab-me"      aria-controls="panel-me"      aria-selected="false">My profile</button>
   </div>
@@ -38,6 +44,14 @@
 
       <div class="stack">
         <div class="card">
+          <div class="card-head">
+            <h2 class="section-title" style="margin:0">Meetings</h2>
+            <button class="btn ghost sm" id="newMeetingBtn" type="button">New</button>
+          </div>
+          <div id="meetingList"></div>
+        </div>
+
+        <div class="card">
           <h2 class="section-title">Define the meeting</h2>
 
           <label class="field">
@@ -45,13 +59,31 @@
             <input type="text" id="mTitle" placeholder="2040 portfolio review" autocomplete="off">
           </label>
 
+          <div class="field-row">
+            <label class="field"><span>Date</span><input type="date" id="mDate"></label>
+            <label class="field"><span>Length</span>
+              <select id="mMinutes">
+                <option value="15">15 min</option>
+                <option value="30">30 min</option>
+                <option value="45">45 min</option>
+                <option value="60">1 hour</option>
+                <option value="90">1.5 hours</option>
+                <option value="120">2 hours</option>
+                <option value="180">3 hours</option>
+              </select>
+            </label>
+          </div>
+
           <label class="field">
             <span>Intended outcome</span>
             <textarea id="mOutcome" rows="3" placeholder="Decide which two concepts go forward, and get the chief engineer to commit resourcing."></textarea>
             <p class="hint">Write it as the thing that is true when the meeting ends. The type suggestions below read this text.</p>
           </label>
 
-          <h2 class="section-title" style="margin-top:22px">What this meeting needs</h2>
+          <h2 class="section-title" style="margin-top:22px">Meeting shape</h2>
+          <div class="arch-row" id="archetypes"></div>
+
+          <h2 class="section-title" style="margin-top:20px">What this meeting needs</h2>
           <div class="typegrid" id="typePicker"></div>
           <p class="hint" id="sugNote" style="font-size:12px;color:var(--text-muted);margin:10px 0 0;line-height:1.5"></p>
         </div>
@@ -67,13 +99,38 @@
     </div>
   </section>
 
+  <!-- ===================== LOAD ===================== -->
+  <section class="panel" id="panel-load" role="tabpanel" aria-labelledby="tab-load" hidden>
+    <div id="loadPanel"></div>
+  </section>
+
+  <!-- ===================== DEBRIEF ===================== -->
+  <section class="panel" id="panel-debrief" role="tabpanel" aria-labelledby="tab-debrief" hidden>
+    <div id="debriefPanel"></div>
+  </section>
+
   <!-- ===================== TEAM ===================== -->
   <section class="panel" id="panel-team" role="tabpanel" aria-labelledby="tab-team" hidden>
     <div class="cols">
 
       <div class="stack">
         <div class="card">
-          <h2 class="section-title">Add someone</h2>
+          <h2 class="section-title">Import the team report</h2>
+          <label class="field">
+            <span>Paste everyone's results</span>
+            <textarea id="bulkText" rows="6" placeholder="Marisol Reyes — Genius: Wonder, Galvanizing; Frustration: Enablement, Tenacity"></textarea>
+            <p class="hint">Paste straight out of the team report, a spreadsheet, or an email. One person per line, in more or less any shape — it reads names and type words and works out the rest.</p>
+          </label>
+          <div class="row">
+            <button class="btn" id="bulkParseBtn" type="button">Read it</button>
+            <button class="btn ghost" id="bulkFmtBtn" type="button">Formats it takes</button>
+          </div>
+          <div id="bulkFmt" hidden style="margin-top:14px"></div>
+          <div id="bulkPreview" style="margin-top:16px"></div>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">Add one person</h2>
           <label class="field">
             <span>Paste a profile code</span>
             <input type="text" id="pasteCode" placeholder="Ada~gcfcgf…" autocomplete="off">

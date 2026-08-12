@@ -111,7 +111,7 @@ a { color: inherit; }
 .wrap {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 28px 20px 80px;
+  padding: 16px 14px calc(56px + env(safe-area-inset-bottom));
 }
 
 /* ---------- top bar ---------- */
@@ -119,14 +119,16 @@ a { color: inherit; }
 .topbar {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding-bottom: 22px;
-  margin-bottom: 26px;
+  gap: 10px;
+  padding-bottom: 14px;
+  margin-bottom: 18px;
   border-bottom: 1px solid var(--gridline);
 }
 
+.topbar > * { min-width: 0; }
+
 .topbar .mark {
-  width: 26px; height: 26px; flex: none;
+  width: 24px; height: 24px; flex: none;
   border-radius: 7px;
   background: var(--series-1);
 }
@@ -136,12 +138,19 @@ a { color: inherit; }
   font-weight: 600;
   letter-spacing: -0.01em;
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .topbar .crumb {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-muted);
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 46vw;
 }
 
 .topbar .spacer { flex: 1; }
@@ -151,13 +160,15 @@ a { color: inherit; }
   border: 1px solid var(--border);
   background: var(--surface-1);
   color: var(--text-secondary);
-  border-radius: 8px;
-  height: 32px;
-  padding: 0 11px;
+  border-radius: 9px;
+  min-height: 40px;
+  padding: 0 13px;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
+  flex: none;
 }
+@media (min-width: 900px) { .iconbtn { min-height: 32px; font-size: 13px; padding: 0 11px; } }
 .iconbtn:hover { color: var(--text-primary); border-color: var(--baseline); }
 
 /* ---------- generic pieces ---------- */
@@ -166,8 +177,9 @@ a { color: inherit; }
   background: var(--surface-1);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 16px;
 }
+@media (min-width: 900px) { .card { padding: 20px; } }
 
 .section-title {
   font-size: 12px;
@@ -191,14 +203,15 @@ a { color: inherit; }
   border: 1px solid transparent;
   background: var(--series-1);
   color: #fff;
-  border-radius: 9px;
-  height: 38px;
-  padding: 0 16px;
+  border-radius: 10px;
+  min-height: 44px;
+  padding: 0 18px;
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 550;
   cursor: pointer;
 }
+@media (min-width: 900px) { .btn { min-height: 38px; font-size: 14px; padding: 0 16px; border-radius: 9px; } }
 .btn:hover { filter: brightness(1.08); }
 .btn.ghost {
   background: var(--surface-1);
@@ -267,6 +280,9 @@ a { color: inherit; }
   max-width: 70ch;
 }
 
-@media (max-width: 640px) {
-  .wrap { padding: 20px 15px 64px; }
+@media (min-width: 900px) {
+  .wrap { padding: 28px 20px 80px; }
+  .topbar { gap: 14px; padding-bottom: 22px; margin-bottom: 26px; }
+  .topbar .mark { width: 26px; height: 26px; }
+  .topbar .crumb { font-size: 13px; max-width: none; }
 }
