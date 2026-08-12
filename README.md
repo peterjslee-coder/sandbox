@@ -17,7 +17,7 @@ no server — plain HTML, CSS and ES modules, served from GitHub Pages.
 
 ## What the shell gives you
 
-`assets/shell.css` — colour tokens (light + dark, both validated), cards, buttons,
+`assets/shell.css` — color tokens (light + dark, both validated), cards, buttons,
 status chips, the hub grid. Use the tokens; don't hard-code hex in an app.
 
 `assets/shell.js` — `initTheme()`, `registerSW()`, `el()` DOM helper,
@@ -32,7 +32,7 @@ Meeting staffing check. A director enters a meeting title and its intended
 outcome; keyword cues suggest which of six work types the meeting needs, which
 the director confirms or overrides. Against the invited roster the app returns:
 
-- which required types no one in the room is energised by, and who on the wider
+- which required types no one in the room is energized by, and who on the wider
   team could fill that gap
 - who was invited but has no genius the meeting uses
 - a suggested agenda sequenced by phase, with a named lead per stretch

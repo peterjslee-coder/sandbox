@@ -23,10 +23,6 @@
       <p class="crumb"><a href="../../">Sandbox</a> · does the work match the people doing it</p>
     </div>
     <div class="spacer"></div>
-    <label class="viewas">
-      <span>Viewing as</span>
-      <select id="viewerSelect"></select>
-    </label>
     <button class="iconbtn" id="themeToggle" type="button">Dark</button>
   </header>
 
@@ -111,22 +107,18 @@
 
   <!-- ===================== TEAM ===================== -->
   <section class="panel" id="panel-team" role="tabpanel" aria-labelledby="tab-team" hidden>
-    <div class="cols">
+    <div class="cols rev">
+
+      <div class="stack" id="teamViz"></div>
 
       <div class="stack">
         <div class="card">
-          <h2 class="section-title">Import the team report</h2>
-          <label class="field">
-            <span>Paste everyone's results</span>
-            <textarea id="bulkText" rows="6" placeholder="Marisol Reyes — Genius: Wonder, Galvanizing; Frustration: Enablement, Tenacity"></textarea>
-            <p class="hint">Paste straight out of the team report, a spreadsheet, or an email. One person per line, in more or less any shape — it reads names and type words and works out the rest.</p>
-          </label>
-          <div class="row">
-            <button class="btn" id="bulkParseBtn" type="button">Read it</button>
-            <button class="btn ghost" id="bulkFmtBtn" type="button">Formats it takes</button>
+          <h2 class="section-title">Team <span id="teamCount2" style="color:var(--text-muted)"></span></h2>
+          <div id="roster"></div>
+          <div class="row" style="margin-top:16px">
+            <button class="btn ghost" id="shareTeamBtn" type="button">Copy team link</button>
+            <button class="btn ghost" id="demoBtn" type="button">Load example team</button>
           </div>
-          <div id="bulkFmt" hidden style="margin-top:14px"></div>
-          <div id="bulkPreview" style="margin-top:16px"></div>
         </div>
 
         <div class="card">
@@ -144,16 +136,20 @@
         </div>
 
         <div class="card">
-          <h2 class="section-title">Team <span id="teamCount2" style="color:var(--text-muted)"></span></h2>
-          <div id="roster"></div>
-          <div class="row" style="margin-top:16px">
-            <button class="btn ghost" id="shareTeamBtn" type="button">Copy team link</button>
-            <button class="btn ghost" id="demoBtn" type="button">Load example team</button>
+          <h2 class="section-title">Import a whole team</h2>
+          <label class="field">
+            <span>Paste everyone's results</span>
+            <textarea id="bulkText" rows="6" placeholder="Marisol Reyes — Genius: Wonder, Galvanizing; Frustration: Enablement, Tenacity"></textarea>
+            <p class="hint">Paste straight out of the team report, a spreadsheet, or an email. One person per line, in more or less any shape — it reads names and type words and works out the rest.</p>
+          </label>
+          <div class="row">
+            <button class="btn" id="bulkParseBtn" type="button">Read it</button>
+            <button class="btn ghost" id="bulkFmtBtn" type="button">Formats it takes</button>
           </div>
+          <div id="bulkFmt" hidden style="margin-top:14px"></div>
+          <div id="bulkPreview" style="margin-top:16px"></div>
         </div>
       </div>
-
-      <div class="stack" id="teamViz"></div>
 
     </div>
   </section>

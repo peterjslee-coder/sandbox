@@ -5,7 +5,7 @@
   "perPerson": { "g": 2, "c": 2, "f": 2 },
 
   "levels": [
-    { "id": "g", "name": "Genius", "short": "G", "desc": "Energising — they gain fuel doing it" },
+    { "id": "g", "name": "Genius", "short": "G", "desc": "Energizing — they gain fuel doing it" },
     { "id": "c", "name": "Competency", "short": "C", "desc": "Capable, but it costs them over time" },
     { "id": "f", "name": "Frustration", "short": "F", "desc": "Draining, and where they are genuinely weak" }
   ],
@@ -44,6 +44,23 @@
     { "id": "task",       "name": "Task",             "altLabel": "ground",    "types": ["tenacity", "discernment"],               "lead": "discernment", "example": "Daily standup, closeout" }
   ],
 
+  "planningModes": [
+    {
+      "id": "intent",
+      "name": "The outcome has to happen",
+      "short": "Fix the outcome",
+      "desc": "The meeting must produce this result. The invite list is the variable — tell me who has to be in the room.",
+      "question": "Who needs to be here?"
+    },
+    {
+      "id": "people",
+      "name": "These are the people I can get",
+      "short": "Fix the people",
+      "desc": "This room is what I have. The shape of the meeting is the variable — tell me what this room can actually do.",
+      "question": "What meeting can this room run?"
+    }
+  ],
+
   "load": {
     "workdayMinutes": 480,
     "thresholds": {
@@ -61,7 +78,7 @@
 
   "debrief": {
     "felt": [
-      { "id": "energising", "name": "Energising", "status": "good" },
+      { "id": "energizing", "name": "Energizing", "status": "good" },
       { "id": "fine",       "name": "Fine",       "status": "neutral" },
       { "id": "draining",   "name": "Draining",   "status": "critical" }
     ],

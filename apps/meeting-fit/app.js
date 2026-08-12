@@ -121,7 +121,7 @@ function meetingSplit(person, m) {
   const mins = m.minutes || 60;
   const felt = m.debriefs?.[person.id]?.felt;
   if (felt === 'draining') return { g: 0, c: 0, f: mins, reported: true };
-  if (felt === 'energising') return { g: mins, c: 0, f: 0, reported: true };
+  if (felt === 'energizing') return { g: mins, c: 0, f: 0, reported: true };
   if (felt === 'fine') return { g: 0, c: mins, f: 0, reported: true };
 
   const req = (m.required || []).filter((id) => TIDX[id] !== undefined);
@@ -271,6 +271,42 @@ function composition(inRoom, required) {
   return { responsive, disruptive, total, modeVerdict, mAlt, people, off, high, low };
 }
 
+/* --- the organizer's choice: which variable is allowed to move --- */
+
+// Fix the outcome → the room moves. Smallest set of people off the bench
+// that closes every gap.
+function minimumRoster(a) {
+  const remaining = new Set(a.gaps.map((c) => c.type.id));
+  const pool = [...a.bench];
+  const picks = [];
+
+  while (remaining.size && pool.length) {
+    let best = null;
+    let bestCover = [];
+    for (const p of pool) {
+      const cover = [...remaining].filter((tid) => levelsOf(p, tid) === 'g');
+      if (cover.length > bestCover.length) { best = p; bestCover = cover; }
+    }
+    if (!best || !bestCover.length) break;
+    picks.push({ person: best, covers: bestCover.map(typeById) });
+    bestCover.forEach((tid) => remaining.delete(tid));
+    pool.splice(pool.indexOf(best), 1);
+  }
+  return { picks, stillMissing: [...remaining].map(typeById) };
+}
+
+// Fix the people → the meeting moves. What this room can actually carry,
+// what has to come off the agenda, and what shape it is really suited to.
+function reshape(a) {
+  const canDo = a.coverage.filter((c) => c.status === 'good' || c.status === 'warning').map((c) => c.type);
+  const cannot = a.gaps.map((c) => c.type);
+  const roomGenius = new Set(a.inRoom.flatMap((p) => geniusesOf(p).map((t) => t.id)));
+  const scored = MODEL.archetypes
+    .map((ar) => ({ ar, score: ar.types.filter((t) => roomGenius.has(t)).length / ar.types.length }))
+    .sort((x, y) => y.score - x.score);
+  return { canDo, cannot, best: scored[0], roomGenius };
+}
+
 function verdictSentence(a) {
   if (!a.required.length) return 'Pick what the meeting needs and the read will appear here.';
   if (!a.inRoom.length) return 'Nobody is in the room yet. Add attendees to see whether the meeting matches them.';
@@ -282,7 +318,7 @@ function verdictSentence(a) {
     const worst = a.gaps.find((c) => c.status === 'critical') || a.gaps[0];
     let s = `This meeting needs ${label}, and the room is not built for it. `;
     if (worst.status === 'critical') {
-      s += `Nobody here is energised by ${worst.type.name}`;
+      s += `Nobody here is energized by ${worst.type.name}`;
       if (worst.f.length) s += `, and ${worst.f.length === 1 ? `${names(worst.f)} is` : `${names(worst.f)} are`} drained by it`;
       s += '. ';
     } else {
@@ -433,12 +469,8 @@ function renderVerdict() {
     el('p', { class: 'verdict-line', text: verdictSentence(a) }),
   ]);
 
-  if (ready && a.gaps.length) {
-    heroCard.append(el('div', { class: 'fix' }, a.gaps.map((c) => c.rescue.length
-      ? el('div', {}, ['Bring in ', el('strong', { text: c.rescue.map((p) => p.name).join(' or ') }), ` — they carry ${c.type.name}.`])
-      : el('div', {}, ['Nobody on this team carries ', el('strong', { text: c.type.name }),
-          '. The invite list cannot fix this one — either the meeting is the wrong shape, or that work needs someone from outside it.']))));
-  }
+  if (ready) heroCard.append(renderMoveBox(m, a));
+  host.append(renderModeChoice(m));
   host.append(heroCard);
   if (!ready) return;
 
@@ -446,7 +478,7 @@ function renderVerdict() {
   const cov = el('div', { class: 'card' }, [el('h2', { class: 'section-title', text: 'What the meeting needs, against who is here' })]);
   for (const c of a.coverage) {
     const who = [];
-    if (c.g.length) who.push(`energised: ${c.g.map((p) => p.name).join(', ')}`);
+    if (c.g.length) who.push(`energized: ${c.g.map((p) => p.name).join(', ')}`);
     if (c.c.length) who.push(`capable: ${c.c.map((p) => p.name).join(', ')}`);
     if (c.f.length) who.push(`drained: ${c.f.map((p) => p.name).join(', ')}`);
     cov.append(el('div', { class: 'cov-row' }, [
@@ -459,7 +491,7 @@ function renderVerdict() {
       ]),
     ]));
   }
-  cov.append(tableView(['Type', 'Energised', 'Capable', 'Drained', 'Verdict'],
+  cov.append(tableView(['Type', 'Energized', 'Capable', 'Drained', 'Verdict'],
     a.coverage.map((c) => [c.type.name, c.g.length, c.c.length, c.f.length, STATUS_LABEL[c.status]])));
   host.append(cov);
 
@@ -485,6 +517,101 @@ function renderVerdict() {
   }
 
   host.append(renderAgenda(a));
+}
+
+const modeOf = (m) => (m && m.mode) || 'intent';
+
+function renderModeChoice(m) {
+  const card = el('div', { class: 'card' }, [
+    el('h2', { class: 'section-title', text: 'What is allowed to move?' }),
+  ]);
+  const seg = el('div', { class: 'seg-wide' });
+  for (const pm of MODEL.planningModes) {
+    seg.append(el('button', {
+      type: 'button',
+      'aria-pressed': String(modeOf(m) === pm.id),
+      text: pm.short,
+      title: pm.desc,
+      onclick: () => { m.mode = pm.id; save(); renderVerdict(); },
+    }));
+  }
+  card.append(seg);
+  const pm = MODEL.planningModes.find((x) => x.id === modeOf(m));
+  card.append(el('p', {
+    style: 'font-size:13.5px;line-height:1.6;margin:12px 0 0;color:var(--text-secondary)',
+    text: pm.desc,
+  }));
+  return card;
+}
+
+// The advice depends entirely on which variable the organizer has freed.
+function renderMoveBox(m, a) {
+  const box = el('div', { class: 'fix' });
+
+  if (modeOf(m) === 'intent') {
+    if (!a.gaps.length) {
+      box.append(el('div', {}, ['This room can produce the outcome as written. Nothing to change.']));
+      if (a.idle.length) {
+        box.append(el('div', { style: 'margin-top:8px' }, [
+          'You could give ', el('strong', { text: a.idle.map((p) => p.name).join(', ') }),
+          ' the hour back — nothing this outcome needs uses their genius.',
+        ]));
+      }
+      return box;
+    }
+    const mr = minimumRoster(a);
+    box.append(el('div', { style: 'margin-bottom:8px;color:var(--text-primary);font-weight:620' },
+      ['To get this outcome, the room has to change.']));
+    for (const pick of mr.picks) {
+      box.append(el('div', {}, [
+        'Add ', el('strong', { text: pick.person.name }),
+        ` — covers ${pick.covers.map((t) => t.name).join(' and ')}.`,
+      ]));
+    }
+    for (const t of mr.stillMissing) {
+      box.append(el('div', {}, [
+        'Nobody on this team carries ', el('strong', { text: t.name }),
+        '. No invite list fixes this one — that work has to come from outside the team, or the outcome has to change.',
+      ]));
+    }
+    if (a.idle.length) {
+      box.append(el('div', { style: 'margin-top:8px' }, [
+        'You can drop ', el('strong', { text: a.idle.map((p) => p.name).join(', ') }),
+        ' without cost to this outcome.',
+      ]));
+    }
+    return box;
+  }
+
+  /* people are fixed — reshape the meeting instead */
+  const rs = reshape(a);
+  if (!rs.cannot.length) {
+    box.append(el('div', {}, ['This room can run the meeting as written. No reshaping needed.']));
+    return box;
+  }
+  box.append(el('div', { style: 'margin-bottom:8px;color:var(--text-primary);font-weight:620' },
+    ['Keep the people, change the meeting.']));
+  if (rs.canDo.length) {
+    box.append(el('div', {}, [
+      'This room can carry ', el('strong', { text: rs.canDo.map((t) => t.name).join(' and ') }),
+      '. Run that much and stop there.',
+    ]));
+  }
+  box.append(el('div', {}, [
+    'Take ', el('strong', { text: rs.cannot.map((t) => t.name).join(' and ') }),
+    ' off this agenda — it will not happen in this room however long you sit there. Book it separately with someone who carries it.',
+  ]));
+  if (rs.best && rs.best.score > 0) {
+    box.append(el('div', { style: 'margin-top:8px' }, [
+      'What this room is actually built for: a ',
+      el('strong', { text: rs.best.ar.name.toLowerCase() }),
+      ` at ${rs.best.ar.altLabel} — ${rs.best.ar.example.toLowerCase()}.`,
+    ]));
+  }
+  box.append(el('div', { style: 'margin-top:8px' }, [
+    'Rewrite the intended outcome to promise only what this room can deliver, so nobody leaves thinking the rest got handled.',
+  ]));
+  return box;
 }
 
 function renderComposition(a) {
@@ -611,6 +738,10 @@ function renderLoad() {
   const v = viewer();
   if (!v) { host.append(el('div', { class: 'card' }, [el('div', { class: 'empty', text: 'Add a team first.' })])); return; }
 
+  host.append(viewerBar(isLeader()
+    ? 'Your own week in full, plus the team in aggregate.'
+    : 'Only this person sees this. It is not visible to whoever runs the team.'));
+
   const dates = weekDates();
   const today = isoDate(new Date());
   const todayIdx = dates.indexOf(today);
@@ -637,7 +768,7 @@ function renderLoad() {
       style: 'font-size:13.5px;line-height:1.6;margin:16px 0 0;padding-top:16px;border-top:1px solid var(--gridline);color:var(--text-secondary)',
       text: dayL.minutes === 0
         ? 'Nothing tracked on this day.'
-        : `${fmtMins(dayL.minutes)} of tracked meetings — ${fmtMins(dayL.g)} energising, ${fmtMins(dayL.c)} competent, ${fmtMins(dayL.f)} draining. Against an ${MODEL.load.workdayMinutes / 60}-hour day.`,
+        : `${fmtMins(dayL.minutes)} of tracked meetings — ${fmtMins(dayL.g)} energizing, ${fmtMins(dayL.c)} competent, ${fmtMins(dayL.f)} draining. Against an ${MODEL.load.workdayMinutes / 60}-hour day.`,
     }),
   ]);
 
@@ -645,7 +776,7 @@ function renderLoad() {
     const rows = el('div', { style: 'margin-top:14px' });
     for (const m of dayL.meetings) {
       const s = meetingSplit(v, m);
-      const dominant = s.f > s.g && s.f > s.c ? 'draining' : s.g >= s.c && s.g >= s.f ? 'energising' : 'competent';
+      const dominant = s.f > s.g && s.f > s.c ? 'draining' : s.g >= s.c && s.g >= s.f ? 'energizing' : 'competent';
       rows.append(el('div', { class: 'load-row' }, [
         el('div', {}, [
           el('div', { class: 'lr-t', text: m.title || 'Untitled' }),
@@ -681,7 +812,7 @@ function renderLoad() {
       el('span', { class: 'sw', style: `background:${l.id === 'g' ? 'var(--div-pos)' : l.id === 'f' ? 'var(--div-neg)' : 'var(--baseline)'}` }),
       `${l.name} — ${wk.g + wk.c + wk.f > 0 ? pct((l.id === 'g' ? wk.g : l.id === 'c' ? wk.c : wk.f) / (wk.g + wk.c + wk.f)) : '0%'}`,
     ]))));
-  week.append(tableView(['Day', 'Tracked', 'Energising', 'Competent', 'Draining'],
+  week.append(tableView(['Day', 'Tracked', 'Energizing', 'Competent', 'Draining'],
     dates.map((d, i) => {
       const l = dayLoad(v, d);
       return [DAY_NAMES[i], fmtMins(l.minutes), fmtMins(l.g), fmtMins(l.c), fmtMins(l.f)];
@@ -784,6 +915,8 @@ function renderDebrief() {
     host.append(el('div', { class: 'card' }, [el('div', { class: 'empty', text: 'Pick a meeting on the Meeting tab first.' })]));
     return;
   }
+
+  host.append(viewerBar('Answering for this person. Switch to fill in someone else.'));
   if (!m.attendees.includes(v.id)) {
     host.append(el('div', { class: 'card' }, [
       el('h2', { class: 'section-title', text: m.title || 'Untitled meeting' }),
@@ -971,7 +1104,7 @@ function renderTeamViz() {
   const max = Math.max(1, ...counts.map((c) => c.n));
   const bars = el('div', { class: 'bars' });
   for (const c of counts) {
-    bars.append(el('div', { class: 'bar-row', title: `${c.n} of ${state.team.length} energised by ${c.t.name}` }, [
+    bars.append(el('div', { class: 'bar-row', title: `${c.n} of ${state.team.length} energized by ${c.t.name}` }, [
       el('div', { class: 'bl', text: c.t.name }),
       el('div', { class: 'bar-track' }, [el('div', {
         class: 'bar-fill' + (c.n === 0 ? ' zero' : ''),
@@ -984,12 +1117,12 @@ function renderTeamViz() {
 
   host.append(el('div', { class: 'card' }, [
     el('h2', { class: 'section-title', text: 'Where this team gains energy' }),
-    el('p', { style: 'font-size:13px;color:var(--text-secondary);margin:0 0 16px;line-height:1.55', text: `People energised by each type, out of ${state.team.length}.` }),
+    el('p', { style: 'font-size:13px;color:var(--text-secondary);margin:0 0 16px;line-height:1.55', text: `People energized by each type, out of ${state.team.length}.` }),
     bars,
-    zero.length ? el('div', { class: 'fix' }, ['Nobody here is energised by ',
+    zero.length ? el('div', { class: 'fix' }, ['Nobody here is energized by ',
       el('strong', { text: zero.map((c) => c.t.name).join(' or ') }),
       '. Any meeting that needs it will stall at that point, every time, no matter who is in the room.']) : null,
-    tableView(['Type', 'Phase', 'Mode', 'Energised', 'Drained'], TYPES.map((t) => [
+    tableView(['Type', 'Phase', 'Mode', 'Energized', 'Drained'], TYPES.map((t) => [
       t.name, MODEL.phases.find((p) => p.id === t.phase).name, t.mode,
       state.team.filter((p) => levelsOf(p, t.id) === 'g').length,
       state.team.filter((p) => levelsOf(p, t.id) === 'f').length,
@@ -1269,18 +1402,36 @@ function showTab(which) {
   if (which === 'debrief') renderDebrief();
 }
 
-function renderViewer() {
-  const sel = document.getElementById('viewerSelect');
-  sel.replaceChildren();
+// Who am I looking at? This has to be unmissable — the whole panel below it
+// means something different depending on the answer.
+function viewerBar(note) {
+  const v = viewer();
+  const sel = el('select', { 'aria-label': 'Whose view to show' });
   for (const p of state.team) {
     sel.append(el('option', { value: p.id, ...(p.id === state.viewerId ? { selected: 'selected' } : {}) },
-      [p.name + (p.id === state.leaderId ? ' (runs the team)' : '')]));
+      [p.name + (p.id === state.leaderId ? ' — runs the team' : '')]));
   }
   if (!state.team.length) sel.append(el('option', { value: '' }, ['—']));
+  sel.addEventListener('change', (e) => {
+    state.viewerId = e.target.value;
+    save(); renderLoad(); renderDebrief();
+  });
+
+  return el('div', { class: 'whobar' }, [
+    el('div', { class: 'avatar', text: (v?.name || '?').trim().charAt(0).toUpperCase() }),
+    el('div', { class: 'wb-t' }, [
+      el('div', { class: 'wb-l', text: 'Viewing as' }),
+      el('div', { class: 'wb-n' }, [
+        v ? v.name : '—',
+        isLeader() ? el('span', { class: 'wb-role', text: 'runs the team' }) : null,
+      ]),
+      note ? el('div', { class: 'wb-note', text: note }) : null,
+    ]),
+    el('div', { class: 'wb-sel' }, [el('span', { class: 'wb-swap', text: 'Switch' }), sel]),
+  ]);
 }
 
 function renderAll() {
-  renderViewer();
   renderMeeting();
   renderRoster();
   renderTeamViz();
@@ -1295,7 +1446,7 @@ function renderAll() {
 
 function newMeeting(patch = {}) {
   return {
-    id: uid('m'), title: '', outcome: '', required: [], attendees: [],
+    id: uid('m'), title: '', outcome: '', required: [], attendees: [], mode: 'intent',
     date: isoDate(new Date()), minutes: 60, touched: false, debriefs: {}, ...patch,
   };
 }
@@ -1379,7 +1530,7 @@ function loadExample(quiet = false) {
   const wedAlign = state.meetings.find((m) => m.title === 'Stakeholder alignment');
   wedAlign.debriefs = {
     [id('You')]: { felt: 'draining', outcome: 'partly', note: 'I should not have run this one. Marisol should have.', obs: { [id('Marisol')]: ['carried', 'underused'] } },
-    [id('Marisol')]: { felt: 'energising', outcome: 'partly', note: 'Happy to take the front on these.', obs: { [id('You')]: ['drained'] } },
+    [id('Marisol')]: { felt: 'energizing', outcome: 'partly', note: 'Happy to take the front on these.', obs: { [id('You')]: ['drained'] } },
   };
 
   state.currentId = state.meetings.find((m) => m.title === '2040 portfolio review').id;
@@ -1421,10 +1572,6 @@ function wire() {
     state.currentId = m.id;
     save(); renderMeeting(); renderDebrief();
     document.getElementById('mTitle').focus();
-  });
-
-  document.getElementById('viewerSelect').addEventListener('change', (e) => {
-    state.viewerId = e.target.value; save(); renderLoad(); renderDebrief();
   });
 
   document.getElementById('meName').addEventListener('input', (e) => { state.me.name = e.target.value; save(); renderMe(); });

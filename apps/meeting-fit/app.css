@@ -1,5 +1,5 @@
 /* Meeting Fit — phone first. Desktop is the enhancement, at the bottom.
-   Colour tokens all come from shell.css. */
+   Color tokens all come from shell.css. */
 
 /* ---------- tabs: scrollable strip on a phone ---------- */
 
@@ -437,3 +437,91 @@ details.tableview[open] summary::before { content: '▾ '; }
   .obs-tag { font-size: 11.5px; padding: 4px 10px; min-height: 0; }
   .seg-wide button { font-size: 12.5px; padding: 7px 12px; min-height: 0; }
 }
+
+/* ---------- who am I viewing as ---------- */
+
+.whobar {
+  display: flex; align-items: center; gap: 12px;
+  background: color-mix(in srgb, var(--series-1) 10%, var(--surface-1));
+  border: 1px solid color-mix(in srgb, var(--series-1) 32%, transparent);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.whobar .avatar {
+  width: 40px; height: 40px; flex: none; border-radius: 50%;
+  background: var(--series-1); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 650;
+}
+.whobar .wb-t { min-width: 0; flex: 1; }
+.whobar .wb-l {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--text-muted);
+}
+.whobar .wb-n {
+  font-size: 17px; font-weight: 650; letter-spacing: -0.015em;
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-top: 1px;
+}
+.whobar .wb-role {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--series-1);
+}
+.whobar .wb-note { font-size: 12px; color: var(--text-secondary); margin-top: 4px; line-height: 1.45; }
+.whobar .wb-sel { position: relative; flex: none; }
+.whobar .wb-swap {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  pointer-events: none; font-size: 14px; font-weight: 600; color: var(--text-primary);
+  border: 1px solid var(--baseline); border-radius: 10px; background: var(--surface-1);
+}
+.whobar .wb-sel select {
+  width: 96px; min-height: 42px; opacity: 0; cursor: pointer;
+}
+
+/* ---------- team page: grid first, import last ---------- */
+
+@media (min-width: 900px) {
+  .cols.rev { grid-template-columns: 1fr 350px; }
+}
+
+/* ---------- demo modal ---------- */
+
+.modal-scrim {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0, 0, 0, 0.62);
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 18px calc(18px + env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) calc(18px + env(safe-area-inset-left));
+  opacity: 1; transition: opacity 0.18s ease;
+}
+.modal-scrim[hidden] { display: none; }
+.modal-scrim.closing { opacity: 0; }
+.modal {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 24px 22px 20px;
+  max-width: 460px; width: 100%;
+  max-height: 88dvh; overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+}
+.modal .m-tag {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
+  color: #fff; background: var(--series-1); border-radius: 999px; padding: 4px 10px;
+  display: inline-block; margin-bottom: 12px;
+}
+.modal h2 { font-size: 20px; font-weight: 640; letter-spacing: -0.02em; margin: 0 0 12px; line-height: 1.25; }
+.modal p { font-size: 14.5px; line-height: 1.62; color: var(--text-secondary); margin: 0 0 13px; }
+.modal p.soon {
+  color: var(--text-primary); font-weight: 550;
+  border-top: 1px solid var(--gridline); padding-top: 14px; margin-top: 16px;
+}
+.modal .btn { width: 100%; margin-top: 8px; }
+
+.helpbtn {
+  appearance: none; cursor: pointer; font: inherit;
+  width: 40px; min-height: 40px; flex: none;
+  border: 1px solid var(--border); background: var(--surface-1);
+  color: var(--text-secondary); border-radius: 9px; font-size: 15px; font-weight: 650;
+}
+@media (min-width: 900px) { .helpbtn { width: 32px; min-height: 32px; font-size: 14px; } }

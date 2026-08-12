@@ -1,5 +1,5 @@
 /* ============================================================
-   Sandbox shell — shared behaviour for every mini-app.
+   Sandbox shell — shared behavior for every mini-app.
    ============================================================ */
 
 /* ---- theme ------------------------------------------------ */
@@ -15,29 +15,24 @@ export const store = {
   },
 };
 
+// Dark is the default. The OS preference does not get a vote unless the
+// person has explicitly chosen light here.
 export function initTheme(buttonId = 'themeToggle') {
   const saved = store.get(THEME_KEY);
-  if (saved === 'light' || saved === 'dark') {
-    document.documentElement.setAttribute('data-theme', saved);
-  }
+  document.documentElement.setAttribute('data-theme', saved === 'light' ? 'light' : 'dark');
+
   const btn = document.getElementById(buttonId);
   if (!btn) return;
 
+  const isDark = () => document.documentElement.getAttribute('data-theme') !== 'light';
+
   const paint = () => {
-    const explicit = document.documentElement.getAttribute('data-theme');
-    const dark = explicit
-      ? explicit === 'dark'
-      : matchMedia('(prefers-color-scheme: dark)').matches;
-    btn.textContent = dark ? 'Light' : 'Dark';
-    btn.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+    btn.textContent = isDark() ? 'Light' : 'Dark';
+    btn.setAttribute('aria-label', isDark() ? 'Switch to light theme' : 'Switch to dark theme');
   };
 
   btn.addEventListener('click', () => {
-    const explicit = document.documentElement.getAttribute('data-theme');
-    const dark = explicit
-      ? explicit === 'dark'
-      : matchMedia('(prefers-color-scheme: dark)').matches;
-    const next = dark ? 'light' : 'dark';
+    const next = isDark() ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     store.set(THEME_KEY, next);
     paint();

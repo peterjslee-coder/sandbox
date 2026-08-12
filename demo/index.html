@@ -231,7 +231,7 @@ a { color: inherit; }
 .btn.ghost:hover { color: var(--text-primary); border-color: var(--baseline); filter: none; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* status chip — colour never travels alone; icon + label always ride with it */
+/* status chip — color never travels alone; icon + label always ride with it */
 .chip {
   display: inline-flex;
   align-items: center;
@@ -297,33 +297,10 @@ a { color: inherit; }
   .topbar .crumb { font-size: 13px; max-width: none; }
 }
 
-
-.demo-banner {
-  border: 1px solid color-mix(in srgb, var(--series-1) 34%, transparent);
-  background: color-mix(in srgb, var(--series-1) 7%, var(--surface-1));
-  border-radius: var(--radius);
-  padding: 20px 22px;
-  margin-bottom: 24px;
-}
-.demo-banner .db-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-.demo-banner .db-tag {
-  font-size: 10.5px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
-  color: #fff; background: var(--series-1); border-radius: 999px; padding: 3px 9px;
-}
-.demo-banner h2 { font-size: 17px; font-weight: 620; letter-spacing: -0.015em; margin: 0; }
-.demo-banner p { font-size: 13.5px; line-height: 1.62; color: var(--text-secondary); margin: 0 0 10px; max-width: 76ch; }
-.demo-banner p:last-of-type { margin-bottom: 0; }
-.demo-banner .try {
-  margin-top: 14px; padding-top: 14px; border-top: 1px solid color-mix(in srgb, var(--series-1) 24%, transparent);
-  display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap;
-}
-.demo-banner .try span { font-size: 13.5px; color: var(--text-secondary); line-height: 1.55; }
-.demo-banner strong { color: var(--text-primary); font-weight: 620; }
-
 </style>
 <style>
 /* Meeting Fit — phone first. Desktop is the enhancement, at the bottom.
-   Colour tokens all come from shell.css. */
+   Color tokens all come from shell.css. */
 
 /* ---------- tabs: scrollable strip on a phone ---------- */
 
@@ -762,6 +739,94 @@ details.tableview[open] summary::before { content: '▾ '; }
   .seg-wide button { font-size: 12.5px; padding: 7px 12px; min-height: 0; }
 }
 
+/* ---------- who am I viewing as ---------- */
+
+.whobar {
+  display: flex; align-items: center; gap: 12px;
+  background: color-mix(in srgb, var(--series-1) 10%, var(--surface-1));
+  border: 1px solid color-mix(in srgb, var(--series-1) 32%, transparent);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.whobar .avatar {
+  width: 40px; height: 40px; flex: none; border-radius: 50%;
+  background: var(--series-1); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 650;
+}
+.whobar .wb-t { min-width: 0; flex: 1; }
+.whobar .wb-l {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--text-muted);
+}
+.whobar .wb-n {
+  font-size: 17px; font-weight: 650; letter-spacing: -0.015em;
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-top: 1px;
+}
+.whobar .wb-role {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--series-1);
+}
+.whobar .wb-note { font-size: 12px; color: var(--text-secondary); margin-top: 4px; line-height: 1.45; }
+.whobar .wb-sel { position: relative; flex: none; }
+.whobar .wb-swap {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  pointer-events: none; font-size: 14px; font-weight: 600; color: var(--text-primary);
+  border: 1px solid var(--baseline); border-radius: 10px; background: var(--surface-1);
+}
+.whobar .wb-sel select {
+  width: 96px; min-height: 42px; opacity: 0; cursor: pointer;
+}
+
+/* ---------- team page: grid first, import last ---------- */
+
+@media (min-width: 900px) {
+  .cols.rev { grid-template-columns: 1fr 350px; }
+}
+
+/* ---------- demo modal ---------- */
+
+.modal-scrim {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0, 0, 0, 0.62);
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 18px calc(18px + env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) calc(18px + env(safe-area-inset-left));
+  opacity: 1; transition: opacity 0.18s ease;
+}
+.modal-scrim[hidden] { display: none; }
+.modal-scrim.closing { opacity: 0; }
+.modal {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 24px 22px 20px;
+  max-width: 460px; width: 100%;
+  max-height: 88dvh; overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+}
+.modal .m-tag {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
+  color: #fff; background: var(--series-1); border-radius: 999px; padding: 4px 10px;
+  display: inline-block; margin-bottom: 12px;
+}
+.modal h2 { font-size: 20px; font-weight: 640; letter-spacing: -0.02em; margin: 0 0 12px; line-height: 1.25; }
+.modal p { font-size: 14.5px; line-height: 1.62; color: var(--text-secondary); margin: 0 0 13px; }
+.modal p.soon {
+  color: var(--text-primary); font-weight: 550;
+  border-top: 1px solid var(--gridline); padding-top: 14px; margin-top: 16px;
+}
+.modal .btn { width: 100%; margin-top: 8px; }
+
+.helpbtn {
+  appearance: none; cursor: pointer; font: inherit;
+  width: 40px; min-height: 40px; flex: none;
+  border: 1px solid var(--border); background: var(--surface-1);
+  color: var(--text-secondary); border-radius: 9px; font-size: 15px; font-weight: 650;
+}
+@media (min-width: 900px) { .helpbtn { width: 32px; min-height: 32px; font-size: 14px; } }
+
 </style>
 </head>
 <body>
@@ -774,36 +839,9 @@ details.tableview[open] summary::before { content: '▾ '; }
       <p class="crumb"><span style="opacity:.7">Sandbox</span> · does the work match the people doing it</p>
     </div>
     <div class="spacer"></div>
-    <label class="viewas">
-      <span>Viewing as</span>
-      <select id="viewerSelect"></select>
-    </label>
+    <button class="helpbtn" id="demoHelp" type="button" aria-label="About this demo">?</button>
     <button class="iconbtn" id="themeToggle" type="button">Dark</button>
   </header>
-
-
-  <div class="demo-banner">
-    <div class="db-top">
-      <span class="db-tag">Demo</span>
-      <h2>A week that looks fine on the calendar, and isn&rsquo;t.</h2>
-    </div>
-    <p>
-      Six people have entered their own results, and a director has put nine meetings on the week.
-      Nothing here is a mock-up: every number is computed from those two things.
-    </p>
-    <p>
-      <strong>Meeting</strong> reads one meeting against the people invited &mdash; what it needs
-      that the room cannot supply, whether the room is all push or all response, and who is
-      flying too high for it. <strong>Load</strong> is the part that makes it organisational:
-      the same meetings, seen as somebody&rsquo;s Wednesday. <strong>Debrief</strong> closes the
-      loop by asking how the hour actually felt.
-    </p>
-    <div class="try">
-      <span><strong>Start on Load.</strong> That is the red face, and the 31% behind it.
-      Then switch <em>Viewing as</em> in the top bar &mdash; each person only ever sees their own.</span>
-      <button class="btn ghost" type="button" onclick="window.__resetDemo &amp;&amp; window.__resetDemo()">Reset demo</button>
-    </div>
-  </div>
 
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" id="tab-meeting" aria-controls="panel-meeting" aria-selected="true">Meeting</button>
@@ -886,22 +924,18 @@ details.tableview[open] summary::before { content: '▾ '; }
 
   <!-- ===================== TEAM ===================== -->
   <section class="panel" id="panel-team" role="tabpanel" aria-labelledby="tab-team" hidden>
-    <div class="cols">
+    <div class="cols rev">
+
+      <div class="stack" id="teamViz"></div>
 
       <div class="stack">
         <div class="card">
-          <h2 class="section-title">Import the team report</h2>
-          <label class="field">
-            <span>Paste everyone's results</span>
-            <textarea id="bulkText" rows="6" placeholder="Marisol Reyes — Genius: Wonder, Galvanizing; Frustration: Enablement, Tenacity"></textarea>
-            <p class="hint">Paste straight out of the team report, a spreadsheet, or an email. One person per line, in more or less any shape — it reads names and type words and works out the rest.</p>
-          </label>
-          <div class="row">
-            <button class="btn" id="bulkParseBtn" type="button">Read it</button>
-            <button class="btn ghost" id="bulkFmtBtn" type="button">Formats it takes</button>
+          <h2 class="section-title">Team <span id="teamCount2" style="color:var(--text-muted)"></span></h2>
+          <div id="roster"></div>
+          <div class="row" style="margin-top:16px">
+            <button class="btn ghost" id="shareTeamBtn" type="button">Copy team link</button>
+            <button class="btn ghost" id="demoBtn" type="button">Reload example</button>
           </div>
-          <div id="bulkFmt" hidden style="margin-top:14px"></div>
-          <div id="bulkPreview" style="margin-top:16px"></div>
         </div>
 
         <div class="card">
@@ -919,16 +953,20 @@ details.tableview[open] summary::before { content: '▾ '; }
         </div>
 
         <div class="card">
-          <h2 class="section-title">Team <span id="teamCount2" style="color:var(--text-muted)"></span></h2>
-          <div id="roster"></div>
-          <div class="row" style="margin-top:16px">
-            <button class="btn ghost" id="shareTeamBtn" type="button">Copy team link</button>
-            <button class="btn ghost" id="demoBtn" type="button">Reload example</button>
+          <h2 class="section-title">Import a whole team</h2>
+          <label class="field">
+            <span>Paste everyone's results</span>
+            <textarea id="bulkText" rows="6" placeholder="Marisol Reyes — Genius: Wonder, Galvanizing; Frustration: Enablement, Tenacity"></textarea>
+            <p class="hint">Paste straight out of the team report, a spreadsheet, or an email. One person per line, in more or less any shape — it reads names and type words and works out the rest.</p>
+          </label>
+          <div class="row">
+            <button class="btn" id="bulkParseBtn" type="button">Read it</button>
+            <button class="btn ghost" id="bulkFmtBtn" type="button">Formats it takes</button>
           </div>
+          <div id="bulkFmt" hidden style="margin-top:14px"></div>
+          <div id="bulkPreview" style="margin-top:16px"></div>
         </div>
       </div>
-
-      <div class="stack" id="teamViz"></div>
 
     </div>
   </section>
@@ -968,10 +1006,10 @@ details.tableview[open] summary::before { content: '▾ '; }
 <div class="toast" id="toast"></div>
 <script type="module">
 window.__DEMO__ = true;
-const MODEL_INLINE = {"id": "six-type", "label": "Six work types", "note": "Type names are the labels from the assessment your team already took. This tool stores and reads results \u2014 it does not assess anyone. Swap this file to point the same engine at a different model.", "perPerson": {"g": 2, "c": 2, "f": 2}, "levels": [{"id": "g", "name": "Genius", "short": "G", "desc": "Energising \u2014 they gain fuel doing it"}, {"id": "c", "name": "Competency", "short": "C", "desc": "Capable, but it costs them over time"}, {"id": "f", "name": "Frustration", "short": "F", "desc": "Draining, and where they are genuinely weak"}], "modes": [{"id": "responsive", "name": "Responsive", "desc": "Reacts to something already in motion \u2014 a situation, an idea, a call for help"}, {"id": "disruptive", "name": "Disruptive", "desc": "Provokes change and pushes it onto other people"}], "phases": [{"id": "ideation", "name": "Ideation", "desc": "Naming the problem and producing an answer"}, {"id": "activation", "name": "Activation", "desc": "Judging what is worth doing and getting people to move"}, {"id": "implementation", "name": "Implementation", "desc": "Supporting the work and carrying it to done"}], "types": [{"id": "wonder", "name": "Wonder", "short": "Wo", "phase": "ideation", "mode": "responsive", "altitude": 1, "altLabel": "25,000 ft", "desc": "Sitting in the question \u2014 noticing something could be better before anyone asks"}, {"id": "invention", "name": "Invention", "short": "In", "phase": "ideation", "mode": "disruptive", "altitude": 2, "altLabel": "20,000 ft", "desc": "Producing an answer from a blank page"}, {"id": "galvanizing", "name": "Galvanizing", "short": "Ga", "phase": "activation", "mode": "disruptive", "altitude": 3, "altLabel": "15,000 ft", "desc": "Getting other people to move on it"}, {"id": "discernment", "name": "Discernment", "short": "Di", "phase": "activation", "mode": "responsive", "altitude": 4, "altLabel": "10,000 ft", "desc": "Judging which answers are any good, on incomplete information"}, {"id": "enablement", "name": "Enablement", "short": "En", "phase": "implementation", "mode": "responsive", "altitude": 5, "altLabel": "5,000 ft", "desc": "Responding to what others need, on their timeline"}, {"id": "tenacity", "name": "Tenacity", "short": "Te", "phase": "implementation", "mode": "disruptive", "altitude": 6, "altLabel": "ground", "desc": "Carrying it to done, at the standard promised"}], "handoffs": [{"id": "h1", "from": "ideation", "to": "activation", "name": "Ideation \u2192 Activation", "symptom": "Good thinking that nobody decides on, and nobody picks up."}, {"id": "h2", "from": "activation", "to": "implementation", "name": "Activation \u2192 Implementation", "symptom": "Decisions that get made with enthusiasm and then never land."}], "archetypes": [{"id": "brainstorm", "name": "Brainstorm", "altLabel": "25,000 ft", "types": ["wonder", "invention"], "lead": "invention", "example": "Quarterly offsite, opportunity review"}, {"id": "solutions", "name": "Solutions", "altLabel": "20,000 ft", "types": ["wonder", "invention", "discernment"], "lead": "invention", "example": "Ad hoc strategic session"}, {"id": "rally", "name": "Rally / tactical", "altLabel": "12,000 ft", "types": ["galvanizing", "enablement", "tenacity"], "lead": "galvanizing", "example": "Weekly staff meeting"}, {"id": "task", "name": "Task", "altLabel": "ground", "types": ["tenacity", "discernment"], "lead": "discernment", "example": "Daily standup, closeout"}], "load": {"workdayMinutes": 480, "thresholds": {"frustrationStrained": 0.3, "frustrationHeavy": 0.15, "geniusThriving": 0.4}, "faces": [{"id": "thriving", "name": "Thriving", "status": "good", "line": "Most of the tracked day sat in work that gives energy back."}, {"id": "fine", "name": "Fine", "status": "neutral", "line": "Nothing here to worry about."}, {"id": "heavy", "name": "Heavy", "status": "warning", "line": "A real share of the day is spent in draining work. Sustainable for a day, not a month."}, {"id": "strained", "name": "Strained", "status": "critical", "line": "Past the line. This is a day built out of the work they are worst suited to."}]}, "debrief": {"felt": [{"id": "energising", "name": "Energising", "status": "good"}, {"id": "fine", "name": "Fine", "status": "neutral"}, {"id": "draining", "name": "Draining", "status": "critical"}], "outcome": [{"id": "yes", "name": "Hit it", "status": "good"}, {"id": "partly", "name": "Partly", "status": "warning"}, {"id": "no", "name": "Missed", "status": "critical"}], "observationTags": [{"id": "carried", "name": "Carried a stretch", "desc": "They were the reason a part of this worked"}, {"id": "underused", "name": "Underused", "desc": "Their genius was in the room and never asked for"}, {"id": "runover", "name": "Got run over", "desc": "They had something and the room moved past it"}, {"id": "drained", "name": "Looked drained", "desc": "This meeting was sitting in their frustration"}]}};
+const MODEL_INLINE = {"id": "six-type", "label": "Six work types", "note": "Type names are the labels from the assessment your team already took. This tool stores and reads results \u2014 it does not assess anyone. Swap this file to point the same engine at a different model.", "perPerson": {"g": 2, "c": 2, "f": 2}, "levels": [{"id": "g", "name": "Genius", "short": "G", "desc": "Energizing \u2014 they gain fuel doing it"}, {"id": "c", "name": "Competency", "short": "C", "desc": "Capable, but it costs them over time"}, {"id": "f", "name": "Frustration", "short": "F", "desc": "Draining, and where they are genuinely weak"}], "modes": [{"id": "responsive", "name": "Responsive", "desc": "Reacts to something already in motion \u2014 a situation, an idea, a call for help"}, {"id": "disruptive", "name": "Disruptive", "desc": "Provokes change and pushes it onto other people"}], "phases": [{"id": "ideation", "name": "Ideation", "desc": "Naming the problem and producing an answer"}, {"id": "activation", "name": "Activation", "desc": "Judging what is worth doing and getting people to move"}, {"id": "implementation", "name": "Implementation", "desc": "Supporting the work and carrying it to done"}], "types": [{"id": "wonder", "name": "Wonder", "short": "Wo", "phase": "ideation", "mode": "responsive", "altitude": 1, "altLabel": "25,000 ft", "desc": "Sitting in the question \u2014 noticing something could be better before anyone asks"}, {"id": "invention", "name": "Invention", "short": "In", "phase": "ideation", "mode": "disruptive", "altitude": 2, "altLabel": "20,000 ft", "desc": "Producing an answer from a blank page"}, {"id": "galvanizing", "name": "Galvanizing", "short": "Ga", "phase": "activation", "mode": "disruptive", "altitude": 3, "altLabel": "15,000 ft", "desc": "Getting other people to move on it"}, {"id": "discernment", "name": "Discernment", "short": "Di", "phase": "activation", "mode": "responsive", "altitude": 4, "altLabel": "10,000 ft", "desc": "Judging which answers are any good, on incomplete information"}, {"id": "enablement", "name": "Enablement", "short": "En", "phase": "implementation", "mode": "responsive", "altitude": 5, "altLabel": "5,000 ft", "desc": "Responding to what others need, on their timeline"}, {"id": "tenacity", "name": "Tenacity", "short": "Te", "phase": "implementation", "mode": "disruptive", "altitude": 6, "altLabel": "ground", "desc": "Carrying it to done, at the standard promised"}], "handoffs": [{"id": "h1", "from": "ideation", "to": "activation", "name": "Ideation \u2192 Activation", "symptom": "Good thinking that nobody decides on, and nobody picks up."}, {"id": "h2", "from": "activation", "to": "implementation", "name": "Activation \u2192 Implementation", "symptom": "Decisions that get made with enthusiasm and then never land."}], "archetypes": [{"id": "brainstorm", "name": "Brainstorm", "altLabel": "25,000 ft", "types": ["wonder", "invention"], "lead": "invention", "example": "Quarterly offsite, opportunity review"}, {"id": "solutions", "name": "Solutions", "altLabel": "20,000 ft", "types": ["wonder", "invention", "discernment"], "lead": "invention", "example": "Ad hoc strategic session"}, {"id": "rally", "name": "Rally / tactical", "altLabel": "12,000 ft", "types": ["galvanizing", "enablement", "tenacity"], "lead": "galvanizing", "example": "Weekly staff meeting"}, {"id": "task", "name": "Task", "altLabel": "ground", "types": ["tenacity", "discernment"], "lead": "discernment", "example": "Daily standup, closeout"}], "planningModes": [{"id": "intent", "name": "The outcome has to happen", "short": "Fix the outcome", "desc": "The meeting must produce this result. The invite list is the variable \u2014 tell me who has to be in the room.", "question": "Who needs to be here?"}, {"id": "people", "name": "These are the people I can get", "short": "Fix the people", "desc": "This room is what I have. The shape of the meeting is the variable \u2014 tell me what this room can actually do.", "question": "What meeting can this room run?"}], "load": {"workdayMinutes": 480, "thresholds": {"frustrationStrained": 0.3, "frustrationHeavy": 0.15, "geniusThriving": 0.4}, "faces": [{"id": "thriving", "name": "Thriving", "status": "good", "line": "Most of the tracked day sat in work that gives energy back."}, {"id": "fine", "name": "Fine", "status": "neutral", "line": "Nothing here to worry about."}, {"id": "heavy", "name": "Heavy", "status": "warning", "line": "A real share of the day is spent in draining work. Sustainable for a day, not a month."}, {"id": "strained", "name": "Strained", "status": "critical", "line": "Past the line. This is a day built out of the work they are worst suited to."}]}, "debrief": {"felt": [{"id": "energizing", "name": "Energizing", "status": "good"}, {"id": "fine", "name": "Fine", "status": "neutral"}, {"id": "draining", "name": "Draining", "status": "critical"}], "outcome": [{"id": "yes", "name": "Hit it", "status": "good"}, {"id": "partly", "name": "Partly", "status": "warning"}, {"id": "no", "name": "Missed", "status": "critical"}], "observationTags": [{"id": "carried", "name": "Carried a stretch", "desc": "They were the reason a part of this worked"}, {"id": "underused", "name": "Underused", "desc": "Their genius was in the room and never asked for"}, {"id": "runover", "name": "Got run over", "desc": "They had something and the room moved past it"}, {"id": "drained", "name": "Looked drained", "desc": "This meeting was sitting in their frustration"}]}};
 
 /* ============================================================
-   Sandbox shell — shared behaviour for every mini-app.
+   Sandbox shell — shared behavior for every mini-app.
    ============================================================ */
 
 /* ---- theme ------------------------------------------------ */
@@ -987,29 +1025,24 @@ const store = {
   },
 };
 
+// Dark is the default. The OS preference does not get a vote unless the
+// person has explicitly chosen light here.
 function initTheme(buttonId = 'themeToggle') {
   const saved = store.get(THEME_KEY);
-  if (saved === 'light' || saved === 'dark') {
-    document.documentElement.setAttribute('data-theme', saved);
-  }
+  document.documentElement.setAttribute('data-theme', saved === 'light' ? 'light' : 'dark');
+
   const btn = document.getElementById(buttonId);
   if (!btn) return;
 
+  const isDark = () => document.documentElement.getAttribute('data-theme') !== 'light';
+
   const paint = () => {
-    const explicit = document.documentElement.getAttribute('data-theme');
-    const dark = explicit
-      ? explicit === 'dark'
-      : matchMedia('(prefers-color-scheme: dark)').matches;
-    btn.textContent = dark ? 'Light' : 'Dark';
-    btn.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+    btn.textContent = isDark() ? 'Light' : 'Dark';
+    btn.setAttribute('aria-label', isDark() ? 'Switch to light theme' : 'Switch to dark theme');
   };
 
   btn.addEventListener('click', () => {
-    const explicit = document.documentElement.getAttribute('data-theme');
-    const dark = explicit
-      ? explicit === 'dark'
-      : matchMedia('(prefers-color-scheme: dark)').matches;
-    const next = dark ? 'light' : 'dark';
+    const next = isDark() ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     store.set(THEME_KEY, next);
     paint();
@@ -1209,7 +1242,7 @@ function meetingSplit(person, m) {
   const mins = m.minutes || 60;
   const felt = m.debriefs?.[person.id]?.felt;
   if (felt === 'draining') return { g: 0, c: 0, f: mins, reported: true };
-  if (felt === 'energising') return { g: mins, c: 0, f: 0, reported: true };
+  if (felt === 'energizing') return { g: mins, c: 0, f: 0, reported: true };
   if (felt === 'fine') return { g: 0, c: mins, f: 0, reported: true };
 
   const req = (m.required || []).filter((id) => TIDX[id] !== undefined);
@@ -1359,6 +1392,42 @@ function composition(inRoom, required) {
   return { responsive, disruptive, total, modeVerdict, mAlt, people, off, high, low };
 }
 
+/* --- the organizer's choice: which variable is allowed to move --- */
+
+// Fix the outcome → the room moves. Smallest set of people off the bench
+// that closes every gap.
+function minimumRoster(a) {
+  const remaining = new Set(a.gaps.map((c) => c.type.id));
+  const pool = [...a.bench];
+  const picks = [];
+
+  while (remaining.size && pool.length) {
+    let best = null;
+    let bestCover = [];
+    for (const p of pool) {
+      const cover = [...remaining].filter((tid) => levelsOf(p, tid) === 'g');
+      if (cover.length > bestCover.length) { best = p; bestCover = cover; }
+    }
+    if (!best || !bestCover.length) break;
+    picks.push({ person: best, covers: bestCover.map(typeById) });
+    bestCover.forEach((tid) => remaining.delete(tid));
+    pool.splice(pool.indexOf(best), 1);
+  }
+  return { picks, stillMissing: [...remaining].map(typeById) };
+}
+
+// Fix the people → the meeting moves. What this room can actually carry,
+// what has to come off the agenda, and what shape it is really suited to.
+function reshape(a) {
+  const canDo = a.coverage.filter((c) => c.status === 'good' || c.status === 'warning').map((c) => c.type);
+  const cannot = a.gaps.map((c) => c.type);
+  const roomGenius = new Set(a.inRoom.flatMap((p) => geniusesOf(p).map((t) => t.id)));
+  const scored = MODEL.archetypes
+    .map((ar) => ({ ar, score: ar.types.filter((t) => roomGenius.has(t)).length / ar.types.length }))
+    .sort((x, y) => y.score - x.score);
+  return { canDo, cannot, best: scored[0], roomGenius };
+}
+
 function verdictSentence(a) {
   if (!a.required.length) return 'Pick what the meeting needs and the read will appear here.';
   if (!a.inRoom.length) return 'Nobody is in the room yet. Add attendees to see whether the meeting matches them.';
@@ -1370,7 +1439,7 @@ function verdictSentence(a) {
     const worst = a.gaps.find((c) => c.status === 'critical') || a.gaps[0];
     let s = `This meeting needs ${label}, and the room is not built for it. `;
     if (worst.status === 'critical') {
-      s += `Nobody here is energised by ${worst.type.name}`;
+      s += `Nobody here is energized by ${worst.type.name}`;
       if (worst.f.length) s += `, and ${worst.f.length === 1 ? `${names(worst.f)} is` : `${names(worst.f)} are`} drained by it`;
       s += '. ';
     } else {
@@ -1521,12 +1590,8 @@ function renderVerdict() {
     el('p', { class: 'verdict-line', text: verdictSentence(a) }),
   ]);
 
-  if (ready && a.gaps.length) {
-    heroCard.append(el('div', { class: 'fix' }, a.gaps.map((c) => c.rescue.length
-      ? el('div', {}, ['Bring in ', el('strong', { text: c.rescue.map((p) => p.name).join(' or ') }), ` — they carry ${c.type.name}.`])
-      : el('div', {}, ['Nobody on this team carries ', el('strong', { text: c.type.name }),
-          '. The invite list cannot fix this one — either the meeting is the wrong shape, or that work needs someone from outside it.']))));
-  }
+  if (ready) heroCard.append(renderMoveBox(m, a));
+  host.append(renderModeChoice(m));
   host.append(heroCard);
   if (!ready) return;
 
@@ -1534,7 +1599,7 @@ function renderVerdict() {
   const cov = el('div', { class: 'card' }, [el('h2', { class: 'section-title', text: 'What the meeting needs, against who is here' })]);
   for (const c of a.coverage) {
     const who = [];
-    if (c.g.length) who.push(`energised: ${c.g.map((p) => p.name).join(', ')}`);
+    if (c.g.length) who.push(`energized: ${c.g.map((p) => p.name).join(', ')}`);
     if (c.c.length) who.push(`capable: ${c.c.map((p) => p.name).join(', ')}`);
     if (c.f.length) who.push(`drained: ${c.f.map((p) => p.name).join(', ')}`);
     cov.append(el('div', { class: 'cov-row' }, [
@@ -1547,7 +1612,7 @@ function renderVerdict() {
       ]),
     ]));
   }
-  cov.append(tableView(['Type', 'Energised', 'Capable', 'Drained', 'Verdict'],
+  cov.append(tableView(['Type', 'Energized', 'Capable', 'Drained', 'Verdict'],
     a.coverage.map((c) => [c.type.name, c.g.length, c.c.length, c.f.length, STATUS_LABEL[c.status]])));
   host.append(cov);
 
@@ -1573,6 +1638,101 @@ function renderVerdict() {
   }
 
   host.append(renderAgenda(a));
+}
+
+const modeOf = (m) => (m && m.mode) || 'intent';
+
+function renderModeChoice(m) {
+  const card = el('div', { class: 'card' }, [
+    el('h2', { class: 'section-title', text: 'What is allowed to move?' }),
+  ]);
+  const seg = el('div', { class: 'seg-wide' });
+  for (const pm of MODEL.planningModes) {
+    seg.append(el('button', {
+      type: 'button',
+      'aria-pressed': String(modeOf(m) === pm.id),
+      text: pm.short,
+      title: pm.desc,
+      onclick: () => { m.mode = pm.id; save(); renderVerdict(); },
+    }));
+  }
+  card.append(seg);
+  const pm = MODEL.planningModes.find((x) => x.id === modeOf(m));
+  card.append(el('p', {
+    style: 'font-size:13.5px;line-height:1.6;margin:12px 0 0;color:var(--text-secondary)',
+    text: pm.desc,
+  }));
+  return card;
+}
+
+// The advice depends entirely on which variable the organizer has freed.
+function renderMoveBox(m, a) {
+  const box = el('div', { class: 'fix' });
+
+  if (modeOf(m) === 'intent') {
+    if (!a.gaps.length) {
+      box.append(el('div', {}, ['This room can produce the outcome as written. Nothing to change.']));
+      if (a.idle.length) {
+        box.append(el('div', { style: 'margin-top:8px' }, [
+          'You could give ', el('strong', { text: a.idle.map((p) => p.name).join(', ') }),
+          ' the hour back — nothing this outcome needs uses their genius.',
+        ]));
+      }
+      return box;
+    }
+    const mr = minimumRoster(a);
+    box.append(el('div', { style: 'margin-bottom:8px;color:var(--text-primary);font-weight:620' },
+      ['To get this outcome, the room has to change.']));
+    for (const pick of mr.picks) {
+      box.append(el('div', {}, [
+        'Add ', el('strong', { text: pick.person.name }),
+        ` — covers ${pick.covers.map((t) => t.name).join(' and ')}.`,
+      ]));
+    }
+    for (const t of mr.stillMissing) {
+      box.append(el('div', {}, [
+        'Nobody on this team carries ', el('strong', { text: t.name }),
+        '. No invite list fixes this one — that work has to come from outside the team, or the outcome has to change.',
+      ]));
+    }
+    if (a.idle.length) {
+      box.append(el('div', { style: 'margin-top:8px' }, [
+        'You can drop ', el('strong', { text: a.idle.map((p) => p.name).join(', ') }),
+        ' without cost to this outcome.',
+      ]));
+    }
+    return box;
+  }
+
+  /* people are fixed — reshape the meeting instead */
+  const rs = reshape(a);
+  if (!rs.cannot.length) {
+    box.append(el('div', {}, ['This room can run the meeting as written. No reshaping needed.']));
+    return box;
+  }
+  box.append(el('div', { style: 'margin-bottom:8px;color:var(--text-primary);font-weight:620' },
+    ['Keep the people, change the meeting.']));
+  if (rs.canDo.length) {
+    box.append(el('div', {}, [
+      'This room can carry ', el('strong', { text: rs.canDo.map((t) => t.name).join(' and ') }),
+      '. Run that much and stop there.',
+    ]));
+  }
+  box.append(el('div', {}, [
+    'Take ', el('strong', { text: rs.cannot.map((t) => t.name).join(' and ') }),
+    ' off this agenda — it will not happen in this room however long you sit there. Book it separately with someone who carries it.',
+  ]));
+  if (rs.best && rs.best.score > 0) {
+    box.append(el('div', { style: 'margin-top:8px' }, [
+      'What this room is actually built for: a ',
+      el('strong', { text: rs.best.ar.name.toLowerCase() }),
+      ` at ${rs.best.ar.altLabel} — ${rs.best.ar.example.toLowerCase()}.`,
+    ]));
+  }
+  box.append(el('div', { style: 'margin-top:8px' }, [
+    'Rewrite the intended outcome to promise only what this room can deliver, so nobody leaves thinking the rest got handled.',
+  ]));
+  return box;
 }
 
 function renderComposition(a) {
@@ -1699,6 +1859,10 @@ function renderLoad() {
   const v = viewer();
   if (!v) { host.append(el('div', { class: 'card' }, [el('div', { class: 'empty', text: 'Add a team first.' })])); return; }
 
+  host.append(viewerBar(isLeader()
+    ? 'Your own week in full, plus the team in aggregate.'
+    : 'Only this person sees this. It is not visible to whoever runs the team.'));
+
   const dates = weekDates();
   const today = isoDate(new Date());
   const todayIdx = dates.indexOf(today);
@@ -1725,7 +1889,7 @@ function renderLoad() {
       style: 'font-size:13.5px;line-height:1.6;margin:16px 0 0;padding-top:16px;border-top:1px solid var(--gridline);color:var(--text-secondary)',
       text: dayL.minutes === 0
         ? 'Nothing tracked on this day.'
-        : `${fmtMins(dayL.minutes)} of tracked meetings — ${fmtMins(dayL.g)} energising, ${fmtMins(dayL.c)} competent, ${fmtMins(dayL.f)} draining. Against an ${MODEL.load.workdayMinutes / 60}-hour day.`,
+        : `${fmtMins(dayL.minutes)} of tracked meetings — ${fmtMins(dayL.g)} energizing, ${fmtMins(dayL.c)} competent, ${fmtMins(dayL.f)} draining. Against an ${MODEL.load.workdayMinutes / 60}-hour day.`,
     }),
   ]);
 
@@ -1733,7 +1897,7 @@ function renderLoad() {
     const rows = el('div', { style: 'margin-top:14px' });
     for (const m of dayL.meetings) {
       const s = meetingSplit(v, m);
-      const dominant = s.f > s.g && s.f > s.c ? 'draining' : s.g >= s.c && s.g >= s.f ? 'energising' : 'competent';
+      const dominant = s.f > s.g && s.f > s.c ? 'draining' : s.g >= s.c && s.g >= s.f ? 'energizing' : 'competent';
       rows.append(el('div', { class: 'load-row' }, [
         el('div', {}, [
           el('div', { class: 'lr-t', text: m.title || 'Untitled' }),
@@ -1769,7 +1933,7 @@ function renderLoad() {
       el('span', { class: 'sw', style: `background:${l.id === 'g' ? 'var(--div-pos)' : l.id === 'f' ? 'var(--div-neg)' : 'var(--baseline)'}` }),
       `${l.name} — ${wk.g + wk.c + wk.f > 0 ? pct((l.id === 'g' ? wk.g : l.id === 'c' ? wk.c : wk.f) / (wk.g + wk.c + wk.f)) : '0%'}`,
     ]))));
-  week.append(tableView(['Day', 'Tracked', 'Energising', 'Competent', 'Draining'],
+  week.append(tableView(['Day', 'Tracked', 'Energizing', 'Competent', 'Draining'],
     dates.map((d, i) => {
       const l = dayLoad(v, d);
       return [DAY_NAMES[i], fmtMins(l.minutes), fmtMins(l.g), fmtMins(l.c), fmtMins(l.f)];
@@ -1872,6 +2036,8 @@ function renderDebrief() {
     host.append(el('div', { class: 'card' }, [el('div', { class: 'empty', text: 'Pick a meeting on the Meeting tab first.' })]));
     return;
   }
+
+  host.append(viewerBar('Answering for this person. Switch to fill in someone else.'));
   if (!m.attendees.includes(v.id)) {
     host.append(el('div', { class: 'card' }, [
       el('h2', { class: 'section-title', text: m.title || 'Untitled meeting' }),
@@ -2059,7 +2225,7 @@ function renderTeamViz() {
   const max = Math.max(1, ...counts.map((c) => c.n));
   const bars = el('div', { class: 'bars' });
   for (const c of counts) {
-    bars.append(el('div', { class: 'bar-row', title: `${c.n} of ${state.team.length} energised by ${c.t.name}` }, [
+    bars.append(el('div', { class: 'bar-row', title: `${c.n} of ${state.team.length} energized by ${c.t.name}` }, [
       el('div', { class: 'bl', text: c.t.name }),
       el('div', { class: 'bar-track' }, [el('div', {
         class: 'bar-fill' + (c.n === 0 ? ' zero' : ''),
@@ -2072,12 +2238,12 @@ function renderTeamViz() {
 
   host.append(el('div', { class: 'card' }, [
     el('h2', { class: 'section-title', text: 'Where this team gains energy' }),
-    el('p', { style: 'font-size:13px;color:var(--text-secondary);margin:0 0 16px;line-height:1.55', text: `People energised by each type, out of ${state.team.length}.` }),
+    el('p', { style: 'font-size:13px;color:var(--text-secondary);margin:0 0 16px;line-height:1.55', text: `People energized by each type, out of ${state.team.length}.` }),
     bars,
-    zero.length ? el('div', { class: 'fix' }, ['Nobody here is energised by ',
+    zero.length ? el('div', { class: 'fix' }, ['Nobody here is energized by ',
       el('strong', { text: zero.map((c) => c.t.name).join(' or ') }),
       '. Any meeting that needs it will stall at that point, every time, no matter who is in the room.']) : null,
-    tableView(['Type', 'Phase', 'Mode', 'Energised', 'Drained'], TYPES.map((t) => [
+    tableView(['Type', 'Phase', 'Mode', 'Energized', 'Drained'], TYPES.map((t) => [
       t.name, MODEL.phases.find((p) => p.id === t.phase).name, t.mode,
       state.team.filter((p) => levelsOf(p, t.id) === 'g').length,
       state.team.filter((p) => levelsOf(p, t.id) === 'f').length,
@@ -2357,18 +2523,36 @@ function showTab(which) {
   if (which === 'debrief') renderDebrief();
 }
 
-function renderViewer() {
-  const sel = document.getElementById('viewerSelect');
-  sel.replaceChildren();
+// Who am I looking at? This has to be unmissable — the whole panel below it
+// means something different depending on the answer.
+function viewerBar(note) {
+  const v = viewer();
+  const sel = el('select', { 'aria-label': 'Whose view to show' });
   for (const p of state.team) {
     sel.append(el('option', { value: p.id, ...(p.id === state.viewerId ? { selected: 'selected' } : {}) },
-      [p.name + (p.id === state.leaderId ? ' (runs the team)' : '')]));
+      [p.name + (p.id === state.leaderId ? ' — runs the team' : '')]));
   }
   if (!state.team.length) sel.append(el('option', { value: '' }, ['—']));
+  sel.addEventListener('change', (e) => {
+    state.viewerId = e.target.value;
+    save(); renderLoad(); renderDebrief();
+  });
+
+  return el('div', { class: 'whobar' }, [
+    el('div', { class: 'avatar', text: (v?.name || '?').trim().charAt(0).toUpperCase() }),
+    el('div', { class: 'wb-t' }, [
+      el('div', { class: 'wb-l', text: 'Viewing as' }),
+      el('div', { class: 'wb-n' }, [
+        v ? v.name : '—',
+        isLeader() ? el('span', { class: 'wb-role', text: 'runs the team' }) : null,
+      ]),
+      note ? el('div', { class: 'wb-note', text: note }) : null,
+    ]),
+    el('div', { class: 'wb-sel' }, [el('span', { class: 'wb-swap', text: 'Switch' }), sel]),
+  ]);
 }
 
 function renderAll() {
-  renderViewer();
   renderMeeting();
   renderRoster();
   renderTeamViz();
@@ -2383,7 +2567,7 @@ function renderAll() {
 
 function newMeeting(patch = {}) {
   return {
-    id: uid('m'), title: '', outcome: '', required: [], attendees: [],
+    id: uid('m'), title: '', outcome: '', required: [], attendees: [], mode: 'intent',
     date: isoDate(new Date()), minutes: 60, touched: false, debriefs: {}, ...patch,
   };
 }
@@ -2467,7 +2651,7 @@ function loadExample(quiet = false) {
   const wedAlign = state.meetings.find((m) => m.title === 'Stakeholder alignment');
   wedAlign.debriefs = {
     [id('You')]: { felt: 'draining', outcome: 'partly', note: 'I should not have run this one. Marisol should have.', obs: { [id('Marisol')]: ['carried', 'underused'] } },
-    [id('Marisol')]: { felt: 'energising', outcome: 'partly', note: 'Happy to take the front on these.', obs: { [id('You')]: ['drained'] } },
+    [id('Marisol')]: { felt: 'energizing', outcome: 'partly', note: 'Happy to take the front on these.', obs: { [id('You')]: ['drained'] } },
   };
 
   state.currentId = state.meetings.find((m) => m.title === '2040 portfolio review').id;
@@ -2509,10 +2693,6 @@ function wire() {
     state.currentId = m.id;
     save(); renderMeeting(); renderDebrief();
     document.getElementById('mTitle').focus();
-  });
-
-  document.getElementById('viewerSelect').addEventListener('change', (e) => {
-    state.viewerId = e.target.value; save(); renderLoad(); renderDebrief();
   });
 
   document.getElementById('meName').addEventListener('input', (e) => { state.me.name = e.target.value; save(); renderMe(); });
@@ -2666,6 +2846,57 @@ Promise.resolve(MODEL_INLINE)
   });
 
 
+</script>
+
+<div class="modal-scrim" id="demoModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="demoModalTitle">
+    <span class="m-tag">Demo</span>
+    <h2 id="demoModalTitle">This is a demo.</h2>
+    <p>
+      You have set a meeting to decide which two concepts go forward and get the chief
+      engineer to commit resourcing, and your team has entered their work geniuses.
+      This will help you frame what gaps may exist based on the intent that you have stated.
+    </p>
+    <p>
+      Everything behind this is live. You are viewing as the person running the team &mdash;
+      the <strong>Viewing as</strong> strip on the Load and Debrief tabs shows whose view
+      you are in, and lets you switch.
+    </p>
+    <p class="soon">This can be operational with real data for the SSG in a few days.</p>
+    <button class="btn" type="button" id="demoModalClose">Got it</button>
+    <button class="btn ghost" type="button" id="demoModalReset" style="width:100%;margin-top:8px">Reset the demo data</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  var KEY = 'meetingFit.demoIntroSeen';
+  var scrim = document.getElementById('demoModal');
+  var seen = false;
+  try { seen = localStorage.getItem(KEY) === '1'; } catch (e) {}
+
+  function open()  { scrim.hidden = false; scrim.classList.remove('closing'); }
+  function close() {
+    scrim.classList.add('closing');
+    setTimeout(function () { scrim.hidden = true; }, 180);
+    try { localStorage.setItem(KEY, '1'); } catch (e) {}
+  }
+
+  if (seen) { scrim.hidden = true; } else { open(); }
+
+  document.getElementById('demoModalClose').addEventListener('click', close);
+  document.getElementById('demoModalReset').addEventListener('click', function () {
+    if (window.__resetDemo) window.__resetDemo();
+    close();
+  });
+  scrim.addEventListener('click', function (e) { if (e.target === scrim) close(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !scrim.hidden) close();
+  });
+
+  var help = document.getElementById('demoHelp');
+  if (help) help.addEventListener('click', open);
+})();
 </script>
 </body>
 </html>
