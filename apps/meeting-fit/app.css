@@ -613,3 +613,33 @@ details.tableview[open] summary::before { content: '▾ '; }
 }
 .tg-name { font-size: 12px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-primary); }
 .tg-count { font-size: 12px; color: var(--text-muted); flex: 1; }
+
+/* ---------- leader criteria + forecast ---------- */
+
+.crit-grid { display: grid; grid-template-columns: 1fr; gap: 7px; }
+@media (min-width: 900px) { .crit-grid { grid-template-columns: 1fr 1fr; } }
+.critchip {
+  appearance: none; text-align: left; cursor: pointer; font: inherit;
+  border: 1px solid var(--border); background: var(--plane);
+  border-radius: 11px; padding: 11px 13px; color: var(--text-secondary); min-height: 52px;
+}
+.critchip[aria-pressed="true"] {
+  border-color: var(--series-1);
+  background: color-mix(in srgb, var(--series-1) 10%, var(--surface-1));
+  color: var(--text-primary);
+}
+.critchip .cc-n { font-size: 14px; font-weight: 620; }
+.critchip .cc-d { font-size: 12px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+
+.meter { height: 12px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.meter-fill { height: 12px; border-radius: 0 4px 4px 0; }
+
+.fc-top { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.fc-num { font-size: 44px; font-weight: 620; line-height: 1; letter-spacing: -0.03em; }
+.fc-cap { font-size: 14px; color: var(--text-secondary); max-width: 26ch; line-height: 1.4; }
+.fc-row {
+  display: grid; grid-template-columns: 1fr 96px; gap: 10px; align-items: center;
+  font-size: 13px; color: var(--text-secondary); padding: 5px 0;
+}
+.fc-bar { height: 10px; border-radius: 3px; background: var(--surface-2); display: block; }
+.fc-bar > span { display: block; height: 10px; border-radius: 0 3px 3px 0; min-width: 2px; }

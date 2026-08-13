@@ -1,97 +1,347 @@
 {
   "id": "six-type",
   "label": "Six work types",
-  "note": "Type names are the labels from the assessment your team already took. This tool stores and reads results — it does not assess anyone. Swap this file to point the same engine at a different model.",
-  "perPerson": { "g": 2, "c": 2, "f": 2 },
-
+  "note": "Type names are the labels from the assessment your team already took. This tool stores and reads results \u2014 it does not assess anyone. Swap this file to point the same engine at a different model.",
+  "perPerson": {
+    "g": 2,
+    "c": 2,
+    "f": 2
+  },
   "levels": [
-    { "id": "g", "name": "Genius", "short": "G", "desc": "Energizing — they gain fuel doing it" },
-    { "id": "c", "name": "Competency", "short": "C", "desc": "Capable, but it costs them over time" },
-    { "id": "f", "name": "Frustration", "short": "F", "desc": "Draining, and where they are genuinely weak" }
+    {
+      "id": "g",
+      "name": "Genius",
+      "short": "G",
+      "desc": "Energizing \u2014 they gain fuel doing it"
+    },
+    {
+      "id": "c",
+      "name": "Competency",
+      "short": "C",
+      "desc": "Capable, but it costs them over time"
+    },
+    {
+      "id": "f",
+      "name": "Frustration",
+      "short": "F",
+      "desc": "Draining, and where they are genuinely weak"
+    }
   ],
-
   "modes": [
-    { "id": "responsive", "name": "Responsive", "desc": "Reacts to something already in motion — a situation, an idea, a call for help" },
-    { "id": "disruptive", "name": "Disruptive", "desc": "Provokes change and pushes it onto other people" }
+    {
+      "id": "responsive",
+      "name": "Responsive",
+      "desc": "Reacts to something already in motion \u2014 a situation, an idea, a call for help"
+    },
+    {
+      "id": "disruptive",
+      "name": "Disruptive",
+      "desc": "Provokes change and pushes it onto other people"
+    }
   ],
-
   "phases": [
-    { "id": "ideation", "name": "Ideation", "desc": "Naming the problem and producing an answer" },
-    { "id": "activation", "name": "Activation", "desc": "Judging what is worth doing and getting people to move" },
-    { "id": "implementation", "name": "Implementation", "desc": "Supporting the work and carrying it to done" }
+    {
+      "id": "ideation",
+      "name": "Ideation",
+      "desc": "Naming the problem and producing an answer"
+    },
+    {
+      "id": "activation",
+      "name": "Activation",
+      "desc": "Judging what is worth doing and getting people to move"
+    },
+    {
+      "id": "implementation",
+      "name": "Implementation",
+      "desc": "Supporting the work and carrying it to done"
+    }
   ],
-
   "types": [
-    { "id": "wonder",      "name": "Wonder",      "short": "Wo", "phase": "ideation",       "mode": "responsive", "altitude": 1, "altLabel": "25,000 ft", "desc": "Sitting in the question — noticing something could be better before anyone asks" },
-    { "id": "invention",   "name": "Invention",   "short": "In", "phase": "ideation",       "mode": "disruptive", "altitude": 2, "altLabel": "20,000 ft", "desc": "Producing an answer from a blank page" },
-    { "id": "galvanizing", "name": "Galvanizing", "short": "Ga", "phase": "activation",     "mode": "disruptive", "altitude": 3, "altLabel": "15,000 ft", "desc": "Getting other people to move on it" },
-    { "id": "discernment", "name": "Discernment", "short": "Di", "phase": "activation",     "mode": "responsive", "altitude": 4, "altLabel": "10,000 ft", "desc": "Judging which answers are any good, on incomplete information" },
-    { "id": "enablement",  "name": "Enablement",  "short": "En", "phase": "implementation", "mode": "responsive", "altitude": 5, "altLabel": "5,000 ft",  "desc": "Responding to what others need, on their timeline" },
-    { "id": "tenacity",    "name": "Tenacity",    "short": "Te", "phase": "implementation", "mode": "disruptive", "altitude": 6, "altLabel": "ground",    "desc": "Carrying it to done, at the standard promised" }
+    {
+      "id": "wonder",
+      "name": "Wonder",
+      "short": "Wo",
+      "phase": "ideation",
+      "mode": "responsive",
+      "altitude": 1,
+      "altLabel": "25,000 ft",
+      "desc": "Sitting in the question \u2014 noticing something could be better before anyone asks"
+    },
+    {
+      "id": "invention",
+      "name": "Invention",
+      "short": "In",
+      "phase": "ideation",
+      "mode": "disruptive",
+      "altitude": 2,
+      "altLabel": "20,000 ft",
+      "desc": "Producing an answer from a blank page"
+    },
+    {
+      "id": "galvanizing",
+      "name": "Galvanizing",
+      "short": "Ga",
+      "phase": "activation",
+      "mode": "disruptive",
+      "altitude": 3,
+      "altLabel": "15,000 ft",
+      "desc": "Getting other people to move on it"
+    },
+    {
+      "id": "discernment",
+      "name": "Discernment",
+      "short": "Di",
+      "phase": "activation",
+      "mode": "responsive",
+      "altitude": 4,
+      "altLabel": "10,000 ft",
+      "desc": "Judging which answers are any good, on incomplete information"
+    },
+    {
+      "id": "enablement",
+      "name": "Enablement",
+      "short": "En",
+      "phase": "implementation",
+      "mode": "responsive",
+      "altitude": 5,
+      "altLabel": "5,000 ft",
+      "desc": "Responding to what others need, on their timeline"
+    },
+    {
+      "id": "tenacity",
+      "name": "Tenacity",
+      "short": "Te",
+      "phase": "implementation",
+      "mode": "disruptive",
+      "altitude": 6,
+      "altLabel": "ground",
+      "desc": "Carrying it to done, at the standard promised"
+    }
   ],
-
   "handoffs": [
-    { "id": "h1", "from": "ideation", "to": "activation", "name": "Ideation → Activation",
-      "symptom": "Good thinking that nobody decides on, and nobody picks up." },
-    { "id": "h2", "from": "activation", "to": "implementation", "name": "Activation → Implementation",
-      "symptom": "Decisions that get made with enthusiasm and then never land." }
+    {
+      "id": "h1",
+      "from": "ideation",
+      "to": "activation",
+      "name": "Ideation \u2192 Activation",
+      "symptom": "Good thinking that nobody decides on, and nobody picks up."
+    },
+    {
+      "id": "h2",
+      "from": "activation",
+      "to": "implementation",
+      "name": "Activation \u2192 Implementation",
+      "symptom": "Decisions that get made with enthusiasm and then never land."
+    }
   ],
-
   "archetypes": [
-    { "id": "brainstorm", "name": "Brainstorm",       "altLabel": "25,000 ft", "types": ["wonder", "invention"],                   "lead": "invention",   "example": "Quarterly offsite, opportunity review" },
-    { "id": "solutions",  "name": "Solutions",        "altLabel": "20,000 ft", "types": ["wonder", "invention", "discernment"],    "lead": "invention",   "example": "Ad hoc strategic session" },
-    { "id": "rally",      "name": "Rally / tactical", "altLabel": "12,000 ft", "types": ["galvanizing", "enablement", "tenacity"], "lead": "galvanizing", "example": "Weekly staff meeting" },
-    { "id": "task",       "name": "Task",             "altLabel": "ground",    "types": ["tenacity", "discernment"],               "lead": "discernment", "example": "Daily standup, closeout" }
+    {
+      "id": "brainstorm",
+      "name": "Brainstorm",
+      "altLabel": "25,000 ft",
+      "types": [
+        "wonder",
+        "invention"
+      ],
+      "lead": "invention",
+      "example": "Quarterly offsite, opportunity review"
+    },
+    {
+      "id": "solutions",
+      "name": "Solutions",
+      "altLabel": "20,000 ft",
+      "types": [
+        "wonder",
+        "invention",
+        "discernment"
+      ],
+      "lead": "invention",
+      "example": "Ad hoc strategic session"
+    },
+    {
+      "id": "rally",
+      "name": "Rally / tactical",
+      "altLabel": "12,000 ft",
+      "types": [
+        "galvanizing",
+        "enablement",
+        "tenacity"
+      ],
+      "lead": "galvanizing",
+      "example": "Weekly staff meeting"
+    },
+    {
+      "id": "task",
+      "name": "Task",
+      "altLabel": "ground",
+      "types": [
+        "tenacity",
+        "discernment"
+      ],
+      "lead": "discernment",
+      "example": "Daily standup, closeout"
+    }
   ],
-
   "planningModes": [
     {
       "id": "intent",
       "name": "The outcome has to happen",
       "short": "Fix the outcome",
-      "desc": "The meeting must produce this result. The invite list is the variable — tell me who has to be in the room.",
+      "desc": "The meeting must produce this result. The invite list is the variable \u2014 tell me who has to be in the room.",
       "question": "Who needs to be here?"
     },
     {
       "id": "people",
       "name": "These are the people I can get",
       "short": "Fix the people",
-      "desc": "This room is what I have. The shape of the meeting is the variable — tell me what this room can actually do.",
+      "desc": "This room is what I have. The shape of the meeting is the variable \u2014 tell me what this room can actually do.",
       "question": "What meeting can this room run?"
     }
   ],
-
   "load": {
     "workdayMinutes": 480,
     "thresholds": {
-      "frustrationStrained": 0.30,
+      "frustrationStrained": 0.3,
       "frustrationHeavy": 0.15,
-      "geniusThriving": 0.40
+      "geniusThriving": 0.4
     },
     "faces": [
-      { "id": "thriving", "name": "Thriving", "status": "good",     "line": "Most of the tracked day sat in work that gives energy back." },
-      { "id": "fine",     "name": "Fine",     "status": "neutral",  "line": "Nothing here to worry about." },
-      { "id": "heavy",    "name": "Heavy",    "status": "warning",  "line": "A real share of the day is spent in draining work. Sustainable for a day, not a month." },
-      { "id": "strained", "name": "Strained", "status": "critical", "line": "Past the line. This is a day built out of the work they are worst suited to." }
+      {
+        "id": "thriving",
+        "name": "Thriving",
+        "status": "good",
+        "line": "Most of the tracked day sat in work that gives energy back."
+      },
+      {
+        "id": "fine",
+        "name": "Fine",
+        "status": "neutral",
+        "line": "Nothing here to worry about."
+      },
+      {
+        "id": "heavy",
+        "name": "Heavy",
+        "status": "warning",
+        "line": "A real share of the day is spent in draining work. Sustainable for a day, not a month."
+      },
+      {
+        "id": "strained",
+        "name": "Strained",
+        "status": "critical",
+        "line": "Past the line. This is a day built out of the work they are worst suited to."
+      }
     ]
   },
-
   "debrief": {
     "felt": [
-      { "id": "energizing", "name": "Energizing", "status": "good" },
-      { "id": "fine",       "name": "Fine",       "status": "neutral" },
-      { "id": "draining",   "name": "Draining",   "status": "critical" }
+      {
+        "id": "energizing",
+        "name": "Energizing",
+        "status": "good"
+      },
+      {
+        "id": "fine",
+        "name": "Fine",
+        "status": "neutral"
+      },
+      {
+        "id": "draining",
+        "name": "Draining",
+        "status": "critical"
+      }
     ],
     "outcome": [
-      { "id": "yes",    "name": "Hit it",   "status": "good" },
-      { "id": "partly", "name": "Partly",   "status": "warning" },
-      { "id": "no",     "name": "Missed",   "status": "critical" }
+      {
+        "id": "yes",
+        "name": "Hit it",
+        "status": "good"
+      },
+      {
+        "id": "partly",
+        "name": "Partly",
+        "status": "warning"
+      },
+      {
+        "id": "no",
+        "name": "Missed",
+        "status": "critical"
+      }
     ],
     "observationTags": [
-      { "id": "carried",   "name": "Carried a stretch",  "desc": "They were the reason a part of this worked" },
-      { "id": "underused", "name": "Underused",          "desc": "Their genius was in the room and never asked for" },
-      { "id": "runover",   "name": "Got run over",       "desc": "They had something and the room moved past it" },
-      { "id": "drained",   "name": "Looked drained",     "desc": "This meeting was sitting in their frustration" }
+      {
+        "id": "carried",
+        "name": "Carried a stretch",
+        "desc": "They were the reason a part of this worked"
+      },
+      {
+        "id": "underused",
+        "name": "Underused",
+        "desc": "Their genius was in the room and never asked for"
+      },
+      {
+        "id": "runover",
+        "name": "Got run over",
+        "desc": "They had something and the room moved past it"
+      },
+      {
+        "id": "drained",
+        "name": "Looked drained",
+        "desc": "This meeting was sitting in their frustration"
+      }
     ]
+  },
+  "criteria": [
+    {
+      "id": "decide",
+      "name": "Decisions that hold",
+      "desc": "A call gets made and it is still the call a week later.",
+      "weights": {
+        "discernment": 2.2,
+        "galvanizing": 1.6,
+        "wonder": 0.8
+      }
+    },
+    {
+      "id": "momentum",
+      "name": "Momentum out of the room",
+      "desc": "People leave and actually move.",
+      "weights": {
+        "galvanizing": 2.3,
+        "enablement": 1.4,
+        "tenacity": 1.2
+      }
+    },
+    {
+      "id": "finish",
+      "name": "Nothing slips",
+      "desc": "What was promised gets delivered, at the standard promised.",
+      "weights": {
+        "tenacity": 2.4,
+        "enablement": 1.5,
+        "discernment": 1.2
+      }
+    },
+    {
+      "id": "newthinking",
+      "name": "New thinking",
+      "desc": "The room produces something that was not there before.",
+      "weights": {
+        "wonder": 1.9,
+        "invention": 2.2
+      }
+    },
+    {
+      "id": "nobodyburned",
+      "name": "Nobody burned",
+      "desc": "The hour does not cost more than it returns.",
+      "weights": {},
+      "loadAware": true
+    }
+  ],
+  "forecast": {
+    "minMeetings": 4,
+    "confidentAt": 20,
+    "shrinkK": 15,
+    "note": "Learned from this device's own debriefs. Below the confident threshold it leans on the rules."
   }
 }

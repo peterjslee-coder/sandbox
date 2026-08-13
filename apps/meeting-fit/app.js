@@ -17,6 +17,7 @@ const state = {
   teams: [],           // { id, name }
   people: [],          // { id, name, levels, team }
   teamFilter: 'all',   // which team the Team tab is showing
+  criteria: ['decide'], // what the leader counts as a good meeting
   meetings: [],        // { id, title, outcome, required[], attendees[], date, minutes, touched, debriefs{} }
   currentId: null,
   viewerId: null,
@@ -26,6 +27,7 @@ const state = {
 
 const save = () => store.set(KEY, JSON.stringify({
   people: state.people, teams: state.teams, meetings: state.meetings, currentId: state.currentId,
+  criteria: state.criteria, teamFilter: state.teamFilter,
   viewerId: state.viewerId, leaderId: state.leaderId, me: state.me,
 }));
 
@@ -344,6 +346,149 @@ function verdictSentence(a) {
   return 'The room matches the meeting. Every type this meeting needs has more than one person here who gains energy from it.';
 }
 
+
+/* ============================================================
+   Leader criteria — what counts as a good meeting here
+   ============================================================ */
+
+const activeCriteria = () =>
+  (MODEL.criteria || []).filter((c) => (state.criteria || []).includes(c.id));
+
+// A type's importance is the strongest claim any active criterion makes on it.
+function weightFor(typeId) {
+  const active = activeCriteria();
+  if (!active.length) return 1;
+  return Math.max(1, ...active.map((c) => c.weights?.[typeId] || 0));
+}
+
+const GAP_COST = { critical: 1, serious: 0.7, warning: 0.35, good: 0 };
+
+// Weighted exposure, 0..1 — how much of what this leader cares about is at risk.
+function criteriaRisk(a) {
+  if (!a.coverage.length) return { score: 0, ranked: [], worst: null };
+  const ranked = a.coverage
+    .map((c) => ({ ...c, weight: weightFor(c.type.id), cost: weightFor(c.type.id) * GAP_COST[c.status] }))
+    .sort((x, y) => y.cost - x.cost);
+  const max = ranked.reduce((s, c) => s + c.weight, 0) || 1;
+  const score = ranked.reduce((s, c) => s + c.cost, 0) / max;
+  return { score: Math.min(1, score), ranked, worst: ranked[0]?.cost > 0 ? ranked[0] : null };
+}
+
+const loadAware = () => activeCriteria().some((c) => c.loadAware);
+
+// For 'nobody burned': who walks in already past the line today
+function strainedAttendees(m, a) {
+  if (!m.date) return [];
+  return a.inRoom.filter((p) => faceFor(dayLoad(p, m.date), 1).id === 'strained');
+}
+
+/* ============================================================
+   Forecast — logistic regression over this device's own debriefs
+   ============================================================ */
+
+const FEATURES = [
+  { k: 'gaps',        label: 'uncovered types',        f: (x) => Math.min(3, x.gaps) / 3 },
+  { k: 'critical',    label: 'a type nobody can do',   f: (x) => (x.critical ? 1 : 0) },
+  { k: 'thin',        label: 'a type resting on one person', f: (x) => Math.min(2, x.thin) / 2 },
+  { k: 'size',        label: 'headcount',              f: (x) => Math.min(12, x.size) / 12 },
+  { k: 'minutes',     label: 'length',                 f: (x) => Math.min(180, x.minutes) / 180 },
+  { k: 'skew',        label: 'responsive/disruptive skew', f: (x) => Math.abs(x.dShare - 0.5) * 2 },
+  { k: 'altitude',    label: 'altitude mismatch',      f: (x) => Math.min(1, x.offAlt / Math.max(1, x.size)) },
+  { k: 'drain',       label: 'draining for the room',  f: (x) => x.drainShare },
+];
+
+function featuresOf(m) {
+  const a = analyze(m);
+  const comp = a.composition;
+  const inRoom = a.inRoom;
+  const drain = inRoom.length
+    ? inRoom.reduce((s, p) => { const sp = meetingSplit(p, m); const t = sp.g + sp.c + sp.f; return s + (t ? sp.f / t : 0); }, 0) / inRoom.length
+    : 0;
+  return {
+    gaps: a.gaps.length,
+    critical: a.coverage.some((c) => c.status === 'critical'),
+    thin: a.thin.length,
+    size: inRoom.length,
+    minutes: m.minutes || 60,
+    dShare: comp.total ? comp.disruptive / comp.total : 0.5,
+    offAlt: comp.off.length,
+    drainShare: drain,
+  };
+}
+
+const OUTCOME_SCORE = { yes: 1, partly: 0.5, no: 0 };
+
+function trainingRows() {
+  const rows = [];
+  for (const m of state.meetings) {
+    const votes = Object.values(m.debriefs || {}).map((d) => d.outcome).filter((o) => o in OUTCOME_SCORE);
+    if (!votes.length || !m.attendees.length || !(m.required || []).length) continue;
+    const y = votes.reduce((s, v) => s + OUTCOME_SCORE[v], 0) / votes.length;
+    rows.push({ x: FEATURES.map((ft) => ft.f(featuresOf(m))), y, m });
+  }
+  return rows;
+}
+
+const sigmoid = (z) => 1 / (1 + Math.exp(-z));
+
+// Plain gradient descent with L2. Tiny data, tiny model, runs in a millisecond.
+function trainForecast(rows, { epochs = 400, lr = 0.35, l2 = 0.05 } = {}) {
+  const n = FEATURES.length;
+  const w = new Array(n).fill(0);
+  let b = 0;
+  for (let e = 0; e < epochs; e += 1) {
+    const gw = new Array(n).fill(0);
+    let gb = 0;
+    for (const r of rows) {
+      const p = sigmoid(r.x.reduce((s, v, i) => s + v * w[i], b));
+      const err = p - r.y;
+      for (let i = 0; i < n; i += 1) gw[i] += err * r.x[i];
+      gb += err;
+    }
+    for (let i = 0; i < n; i += 1) w[i] -= lr * (gw[i] / rows.length + l2 * w[i]);
+    b -= lr * (gb / rows.length);
+  }
+  return { w, b };
+}
+
+function forecast(m) {
+  const cfg = MODEL.forecast || {};
+  const rows = trainingRows();
+  const n = rows.length;
+  const base = rows.length ? rows.reduce((s, r) => s + r.y, 0) / rows.length : null;
+
+  // the rules-based prior: what the current read implies on its own
+  const a = analyze(m);
+  const risk = criteriaRisk(a).score;
+  const prior = Math.max(0.05, Math.min(0.95, 0.85 - 0.7 * risk));
+
+  if (n < (cfg.minMeetings || 4)) {
+    return { ready: false, n, prior, needed: (cfg.minMeetings || 4) - n };
+  }
+
+  const model = trainForecast(rows);
+  const x = FEATURES.map((ft) => ft.f(featuresOf(m)));
+  const raw = sigmoid(x.reduce((s, v, i) => s + v * model.w[i], model.b));
+
+  // shrink toward the prior until there is enough evidence to earn the claim
+  const k = cfg.shrinkK || 15;
+  const trust = n / (n + k);
+  const p = trust * raw + (1 - trust) * prior;
+
+  const contrib = FEATURES
+    .map((ft, i) => ({ label: ft.label, v: model.w[i] * x[i] }))
+    .filter((c) => Math.abs(c.v) > 0.05)
+    .sort((c1, c2) => c1.v - c2.v);
+
+  return {
+    ready: true, n, p, raw, prior, trust,
+    confident: n >= (cfg.confidentAt || 20),
+    base,
+    hurts: contrib.filter((c) => c.v < 0).slice(0, 2),
+    helps: contrib.filter((c) => c.v > 0).slice(-2).reverse(),
+  };
+}
+
 /* ============================================================
    Meeting panel
    ============================================================ */
@@ -615,6 +760,124 @@ function renderAttendeePicker() {
   }
 }
 
+
+function renderCriteria() {
+  const card = el('div', { class: 'card' }, [
+    el('h2', { class: 'section-title', text: 'What a good meeting means here' }),
+    el('p', { class: 'hint', style: 'margin:-6px 0 12px', text: 'The leader\'s call. Everything below is judged against this, not a generic model.' }),
+  ]);
+  const wrap = el('div', { class: 'crit-grid' });
+  for (const c of MODEL.criteria || []) {
+    const on = (state.criteria || []).includes(c.id);
+    wrap.append(el('button', {
+      class: 'critchip', type: 'button', 'aria-pressed': String(on), title: c.desc,
+      onclick: () => {
+        const arr = state.criteria || [];
+        const i = arr.indexOf(c.id);
+        if (i >= 0) arr.splice(i, 1); else arr.push(c.id);
+        state.criteria = arr;
+        save(); renderVerdict();
+      },
+    }, [
+      el('div', { class: 'cc-n', text: c.name }),
+      el('div', { class: 'cc-d', text: c.desc }),
+    ]));
+  }
+  card.append(wrap);
+  if (!(state.criteria || []).length) {
+    card.append(el('p', { class: 'hint', text: 'Nothing picked — every type is weighted the same, which is nobody\'s actual view.' }));
+  }
+  return card;
+}
+
+function renderCriteriaRead(m, a) {
+  const active = activeCriteria();
+  if (!active.length) return null;
+  const r = criteriaRisk(a);
+  const card = el('div', { class: 'card' }, [
+    el('h2', { class: 'section-title', text: `Against ${active.map((c) => c.name.toLowerCase()).join(' and ')}` }),
+  ]);
+
+  const pctAtRisk = Math.round(r.score * 100);
+  card.append(el('div', { class: 'meter' }, [
+    el('div', { class: 'meter-fill', style: `width:${Math.max(2, pctAtRisk)}%;background:${pctAtRisk >= 50 ? 'var(--status-critical)' : pctAtRisk >= 20 ? 'var(--status-warning)' : 'var(--status-good)'}` }),
+  ]));
+  card.append(el('p', {
+    style: 'font-size:13px;color:var(--text-muted);margin:6px 0 14px',
+    text: `${pctAtRisk}% of what you said matters is exposed in this room.`,
+  }));
+
+  if (r.worst) {
+    card.append(el('p', { style: 'font-size:14.5px;line-height:1.6;margin:0;color:var(--text-secondary)' }, [
+      'Of everything missing, ',
+      el('strong', { style: 'color:var(--text-primary)', text: r.worst.type.name }),
+      ` is the one that costs you most — it carries the heaviest weight under ${active.map((c) => c.name.toLowerCase()).join(' / ')}, and it is `,
+      STATUS_LABEL[r.worst.status].toLowerCase(), '.',
+    ]));
+  } else {
+    card.append(el('p', { style: 'font-size:14.5px;line-height:1.6;margin:0;color:var(--text-secondary)',
+      text: 'Nothing this room is missing matters much to what you said you care about.' }));
+  }
+
+  if (loadAware()) {
+    const strained = strainedAttendees(m, a);
+    card.append(el('p', { style: 'font-size:13.5px;line-height:1.6;margin:12px 0 0;color:var(--text-secondary)' },
+      strained.length
+        ? ['You said nobody burned. ', el('strong', { style: 'color:var(--text-primary)', text: strained.map((p2) => p2.name).join(', ') }),
+           strained.length === 1 ? ' walks into this already past the line today.' : ' walk into this already past the line today.']
+        : ['You said nobody burned. Nobody in this room is past the line today.']));
+  }
+  return card;
+}
+
+function renderForecast(m) {
+  const f = forecast(m);
+  const card = el('div', { class: 'card' }, [
+    el('h2', { class: 'section-title', text: 'Forecast' }),
+  ]);
+
+  if (!f.ready) {
+    card.append(el('p', { style: 'font-size:13.5px;line-height:1.6;margin:0;color:var(--text-muted)',
+      text: `Learning from your debriefs. ${f.n} debriefed so far — ${f.needed} more and this starts predicting from your own results instead of the rules.` }));
+    return card;
+  }
+
+  const pctv = Math.round(f.p * 100);
+  card.append(el('div', { class: 'fc-top' }, [
+    el('div', { class: 'fc-num', style: `color:${pctv >= 60 ? 'var(--status-good)' : pctv >= 35 ? 'var(--status-warning)' : 'var(--status-critical)'}`, text: `${pctv}%` }),
+    el('div', { class: 'fc-cap', text: 'chance this meeting hits its stated outcome' }),
+  ]));
+
+  const lines = [];
+  lines.push(`Learned from ${f.n} debriefed meeting${f.n === 1 ? '' : 's'} on this device`
+    + (f.base !== null ? `, which hit their outcome ${Math.round(f.base * 100)}% of the time on average` : '') + '.');
+  if (!f.confident) {
+    lines.push(`That is not yet enough to trust on its own, so this is still leaning on the rules — treat it as a hint, not a number.`);
+  }
+  card.append(el('p', { style: 'font-size:13px;color:var(--text-muted);margin:10px 0 0;line-height:1.6', text: lines.join(' ') }));
+
+  if (f.hurts.length) {
+    card.append(el('h3', { class: 'section-title', style: 'margin:18px 0 6px', text: 'What is pulling it down' }));
+    for (const h of f.hurts) {
+      card.append(el('div', { class: 'fc-row' }, [
+        el('span', { text: h.label }),
+        el('span', { class: 'fc-bar' }, [el('span', { style: `width:${Math.min(100, Math.abs(h.v) * 90)}%;background:var(--status-critical)` })]),
+      ]));
+    }
+  }
+  if (f.helps.length) {
+    card.append(el('h3', { class: 'section-title', style: 'margin:18px 0 6px', text: 'What is helping' }));
+    for (const h of f.helps) {
+      card.append(el('div', { class: 'fc-row' }, [
+        el('span', { text: h.label }),
+        el('span', { class: 'fc-bar' }, [el('span', { style: `width:${Math.min(100, Math.abs(h.v) * 90)}%;background:var(--status-good)` })]),
+      ]));
+    }
+  }
+  card.append(el('p', { class: 'privacy', text: 'Trained in this browser, on this device, from debriefs entered here. Nothing is sent anywhere, and it knows nothing about any other team.' }));
+  return card;
+}
+
 function renderVerdict() {
   const host = document.getElementById('verdictCol');
   host.replaceChildren();
@@ -638,13 +901,15 @@ function renderVerdict() {
   ]);
 
   if (ready) heroCard.append(renderMoveBox(m, a));
+  host.append(renderCriteria());
   host.append(renderModeChoice(m));
   host.append(heroCard);
   if (!ready) return;
 
   /* coverage */
   const cov = el('div', { class: 'card' }, [el('h2', { class: 'section-title', text: 'What the meeting needs, against who is here' })]);
-  for (const c of a.coverage) {
+  const ordered = activeCriteria().length ? criteriaRisk(a).ranked : a.coverage;
+  for (const c of ordered) {
     const who = [];
     if (c.g.length) who.push(`energized: ${c.g.map((p) => p.name).join(', ')}`);
     if (c.c.length) who.push(`capable: ${c.c.map((p) => p.name).join(', ')}`);
@@ -663,6 +928,9 @@ function renderVerdict() {
     a.coverage.map((c) => [c.type.name, c.g.length, c.c.length, c.f.length, STATUS_LABEL[c.status]])));
   host.append(cov);
 
+  const critRead = renderCriteriaRead(m, a);
+  if (critRead) host.append(critRead);
+  host.append(renderForecast(m));
   host.append(renderComposition(a));
 
   if (a.idle.length || a.drained.length) {
@@ -1777,13 +2045,50 @@ function loadExample(quiet = false) {
     }),
   ];
 
-  const align = state.meetings.find((m) => m.title === 'Stakeholder alignment');
-  if (align && me) {
-    align.debriefs = {
-      [me]: { felt: 'draining', outcome: 'partly', note: 'I should not have run this one.', obs: { [pid('ssg', 'A.H.')]: ['carried', 'underused'] } },
-      [pid('ssg', 'A.H.')]: { felt: 'energizing', outcome: 'partly', note: 'Happy to take the front on these.', obs: { [me]: ['drained'] } },
-    };
-  }
+  // A run of debriefed history, so the forecast has something to learn from.
+  // Meetings that were short a type mostly missed; the covered ones mostly landed.
+  const debrief = (title, entries) => {
+    const mm = state.meetings.find((x) => x.title === title);
+    if (!mm) return;
+    mm.debriefs = {};
+    for (const [name, d] of entries) {
+      const id = pid('ssg', name) || pid('ecs', name) || pid('grs', name);
+      if (id && mm.attendees.includes(id)) mm.debriefs[id] = { obs: {}, ...d };
+    }
+  };
+
+  debrief('Stakeholder alignment', [
+    ['P.L.', { felt: 'draining', outcome: 'no', note: 'I should not have run this one.', obs: { [pid('ssg', 'A.H.')]: ['carried', 'underused'] } }],
+    ['A.H.', { felt: 'energizing', outcome: 'partly', note: 'Happy to take the front on these.', obs: { [me]: ['drained'] } }],
+    ['R.G.', { felt: 'fine', outcome: 'no' }],
+  ]);
+  debrief('Weekly staff sync', [
+    ['P.L.', { felt: 'draining', outcome: 'partly', note: 'Too many people for what it decides.' }],
+    ['A.H.', { felt: 'fine', outcome: 'partly' }],
+    ['N.P.', { felt: 'draining', outcome: 'no' }],
+  ]);
+  debrief('Concept down-select', [
+    ['P.L.', { felt: 'energizing', outcome: 'yes', note: 'Right people, right length.' }],
+    ['K.M.', { felt: 'energizing', outcome: 'yes' }],
+    ['M.L.', { felt: 'fine', outcome: 'yes' }],
+  ]);
+  debrief('Daily standup', [
+    ['N.P.', { felt: 'fine', outcome: 'yes' }],
+    ['E.M.', { felt: 'fine', outcome: 'yes' }],
+  ]);
+  debrief('Supplier escalation', [
+    ['P.L.', { felt: 'draining', outcome: 'no', note: 'Wrong person in the chair — me.' }],
+    ['T.S.', { felt: 'fine', outcome: 'partly' }],
+  ]);
+  debrief('Program sync — resourcing', [
+    ['P.L.', { felt: 'draining', outcome: 'partly' }],
+    ['A.H.', { felt: 'energizing', outcome: 'yes' }],
+    ['B.B.', { felt: 'fine', outcome: 'yes' }],
+  ]);
+  debrief('Closeout review', [
+    ['N.P.', { felt: 'fine', outcome: 'partly' }],
+    ['E.M.', { felt: 'fine', outcome: 'yes' }],
+  ]);
 
   state.currentId = state.meetings.find((m) => m.title === '2040 portfolio review').id;
 

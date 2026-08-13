@@ -6,7 +6,7 @@
    every time. That is what cache:'reload' below does. The Cache Storage copy
    is kept purely as the offline fallback. */
 
-const CACHE = 'sandbox-v9';
+const CACHE = 'sandbox-v10';
 
 const PRECACHE = [
   './',

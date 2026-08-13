@@ -41,6 +41,23 @@ Team profiles are entered by each person on the **My profile** tab, which emits 
 short code they send back to the director. Everything is device-local; the only
 data that travels is a code containing a name and six letters.
 
+**Leader criteria.** The leader picks what a good meeting means to them —
+decisions that hold, momentum, nothing slips, new thinking, nobody burned. Each
+criterion carries weights over the six types, and a type's importance is the
+strongest claim any active criterion makes on it. The coverage list is ordered by
+weighted cost, and the read names the gap that costs *this* leader most rather
+than the first one alphabetically.
+
+**Forecast.** Logistic regression over this device's own debriefs — eight
+features (gap count, a type nobody can do, a type resting on one person,
+headcount, length, responsive/disruptive skew, altitude mismatch, how draining
+the room found it) predicting whether the stated outcome was hit. Plain gradient
+descent with L2, trained in the browser in about a millisecond, no data leaving
+the device and no model API. Below `forecast.minMeetings` it says nothing;
+between there and `confidentAt` it shrinks toward the rules-based prior by
+`n / (n + shrinkK)` and says out loud that it is only a hint. Sample size is
+shown next to every claim.
+
 The model lives in `apps/meeting-fit/model.json` — types, phases, handoffs and
 level definitions. The engine reads it generically, so pointing it at a different
 framework is a file swap, not a rewrite.
