@@ -29,8 +29,8 @@ const save = () => store.set(KEY, JSON.stringify({
 
 function load() {
   const raw = store.get(KEY);
-  if (!raw) return;
-  try { Object.assign(state, JSON.parse(raw)); } catch { /* start clean */ }
+  if (!raw) return false;
+  try { Object.assign(state, JSON.parse(raw)); return true; } catch { return false; }
 }
 
 const uid = (p = 'p') => p + Math.random().toString(36).slice(2, 9);
@@ -1828,16 +1828,19 @@ fetch('./model.json')
     TYPES.forEach((t, i) => { TIDX[t.id] = i; });
     state.me.levels = 'c'.repeat(TYPES.length);
 
-    load();
+    const hadSaved = load();
     importFromHash();
     wire();
 
     window.__startNewMeeting = startNewMeeting;
 
-    if (window.__DEMO__) {
+    if (window.__DEMO__ && (!hadSaved || !state.team.length)) {
+      // seed the worked example only for a first-time visitor — never stomp on
+      // a team someone has actually imported
       window.__resetDemo = () => { loadExample(true); showTab('meeting'); };
       window.__resetDemo();
     } else {
+      if (window.__DEMO__) window.__resetDemo = () => { loadExample(true); showTab('meeting'); };
       renderAll();
     }
 

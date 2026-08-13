@@ -1,7 +1,7 @@
 /* Sandbox service worker — network-first so a push always wins,
    cache as the offline fallback. Bump CACHE on any release. */
 
-const CACHE = 'sandbox-v5';
+const CACHE = 'sandbox-v6';
 
 const PRECACHE = [
   './',
