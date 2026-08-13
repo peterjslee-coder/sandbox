@@ -46,8 +46,27 @@ export function initTheme(buttonId = 'themeToggle') {
 export function registerSW(scopeRelativePath = './sw.js') {
   if (!('serviceWorker' in navigator)) return;
   if (location.protocol !== 'https:' && location.hostname !== 'localhost') return;
+
+  // When a new worker takes over, the page in front of the user is already
+  // stale — swap it once, quietly. The guard stops a reload loop.
+  let swapped = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (swapped) return;
+    swapped = true;
+    location.reload();
+  });
+
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register(scopeRelativePath).catch(() => { /* non-fatal */ });
+    // updateViaCache:'none' keeps the worker script itself off the HTTP cache
+    navigator.serviceWorker.register(scopeRelativePath, { updateViaCache: 'none' })
+      .then((reg) => {
+        reg.update().catch(() => {});
+        // check again whenever the user comes back to the tab
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') reg.update().catch(() => {});
+        });
+      })
+      .catch(() => { /* non-fatal */ });
   });
 }
 

@@ -122,13 +122,18 @@
           <h2 class="section-title">Team <span id="teamCount2" style="color:var(--text-muted)"></span></h2>
           <div id="roster"></div>
           <div class="row" style="margin-top:16px">
-            <button class="btn ghost" id="shareTeamBtn" type="button">Copy team link</button>
+            <button class="btn ghost" id="newTeamBtn" type="button">+ New team</button>
+            <button class="btn ghost" id="shareTeamBtn" type="button">Copy link</button>
             <button class="btn ghost" id="demoBtn" type="button">Reload all teams</button>
           </div>
         </div>
 
         <div class="card">
           <h2 class="section-title">Add one person</h2>
+          <label class="field">
+            <span>Add to which team</span>
+            <select id="addTeam"></select>
+          </label>
           <label class="field">
             <span>Paste a profile code</span>
             <input type="text" id="pasteCode" placeholder="Ada~gcfcgf…" autocomplete="off">

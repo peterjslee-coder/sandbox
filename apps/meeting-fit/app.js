@@ -1233,6 +1233,43 @@ function renderDebriefSummary(m) {
    Team + profile panels
    ============================================================ */
 
+function renderAddTeamSelect() {
+  const sel = document.getElementById('addTeam');
+  if (!sel) return;
+  const want = state.teamFilter === 'all' ? (state.teams[0]?.id || '') : state.teamFilter;
+  sel.replaceChildren();
+  for (const t of state.teams) {
+    sel.append(el('option', { value: t.id, ...(t.id === want ? { selected: 'selected' } : {}) }, [t.name]));
+  }
+  if (!state.teams.length) sel.append(el('option', { value: '' }, ['(create a team first)']));
+}
+
+const addTeamId = () => {
+  const sel = document.getElementById('addTeam');
+  const id = sel?.value || (state.teamFilter === 'all' ? state.teams[0]?.id : state.teamFilter);
+  if (id && teamById(id)) return id;
+  const t = { id: uid('t'), name: `Team ${state.teams.length + 1}` };
+  state.teams.push(t);
+  return t.id;
+};
+
+function addTeam() {
+  const raw = prompt('Name the new team');
+  if (raw === null) return;
+  const name = raw.trim();
+  if (!name) return;
+  if (state.teams.some((t) => t.name.toLowerCase() === name.toLowerCase())) {
+    toast('That team already exists');
+    return;
+  }
+  let id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 24) || uid('t');
+  if (state.teams.some((t) => t.id === id)) id = uid('t');
+  state.teams.push({ id, name });
+  state.teamFilter = id;
+  save(); renderAll();
+  toast(`${name} created — add people to it below`);
+}
+
 function renderTeamSwitcher() {
   const host = document.getElementById('teamSwitch');
   if (!host) return;
@@ -1241,7 +1278,7 @@ function renderTeamSwitcher() {
 
   const mk = (id, label, count) => el('button', {
     class: 'teamchip', type: 'button', 'aria-pressed': String(state.teamFilter === id),
-    onclick: () => { state.teamFilter = id; save(); renderRoster(); renderTeamViz(); renderTeamSwitcher(); },
+    onclick: () => { state.teamFilter = id; save(); renderRoster(); renderTeamViz(); renderTeamSwitcher(); renderAddTeamSelect(); },
   }, [label, el('span', { class: 'tc-count', text: String(count) })]);
 
   for (const t of state.teams) host.append(mk(t.id, t.name, peopleOf(t.id).length));
@@ -1626,6 +1663,7 @@ function viewerBar(note) {
       el('div', { class: 'wb-l', text: 'Viewing as' }),
       el('div', { class: 'wb-n' }, [
         v ? v.name : '—',
+        v ? el('span', { class: 'teambadge', text: teamName(v) }) : null,
         isLeader() ? el('span', { class: 'wb-role', text: 'runs the team' }) : null,
       ]),
       note ? el('div', { class: 'wb-note', text: note }) : null,
@@ -1636,6 +1674,7 @@ function viewerBar(note) {
 
 function renderAll() {
   renderTeamSwitcher();
+  renderAddTeamSelect();
   renderMeeting();
   renderRoster();
   renderTeamViz();
@@ -1790,9 +1829,7 @@ function wire() {
   });
 
   document.getElementById('meAddBtn').addEventListener('click', () => {
-    const p = { id: uid(), name: state.me.name.trim(), levels: state.me.levels,
-      team: state.teamFilter === 'all' ? (state.teams[0]?.id || null) : state.teamFilter };
-    if (!p.team) { const t = { id: 'team-1', name: 'Team 1' }; state.teams.push(t); p.team = t.id; }
+    const p = { id: uid(), name: state.me.name.trim(), levels: state.me.levels, team: addTeamId() };
     state.people.push(p);
     if (!state.viewerId) state.viewerId = p.id;
     save(); renderAll(); showTab('team'); toast('Added to the team');
@@ -1802,8 +1839,7 @@ function wire() {
     const input = document.getElementById('pasteCode');
     const p = decodeProfile(input.value);
     if (!p) { toast('That code did not read — check it was copied whole'); return; }
-    p.team = state.teamFilter === 'all' ? (state.teams[0]?.id || null) : state.teamFilter;
-    if (!p.team) { const t = { id: 'team-1', name: 'Team 1' }; state.teams.push(t); p.team = t.id; }
+    p.team = addTeamId();
     state.people.push(p);
     if (!state.viewerId) state.viewerId = p.id;
     input.value = '';
@@ -1811,6 +1847,7 @@ function wire() {
   });
 
   document.getElementById('demoBtn').addEventListener('click', () => loadExample(false));
+  document.getElementById('newTeamBtn').addEventListener('click', addTeam);
 
   document.getElementById('bulkParseBtn').addEventListener('click', () => {
     const text = document.getElementById('bulkText').value;
@@ -1882,9 +1919,7 @@ function renderManual() {
 
   addBtn.addEventListener('click', () => {
     if (!validLevels(draft.levels) || !draft.name.trim()) return;
-    const p = { id: uid(), name: draft.name.trim(), levels: draft.levels,
-      team: state.teamFilter === 'all' ? (state.teams[0]?.id || null) : state.teamFilter };
-    if (!p.team) { const t = { id: 'team-1', name: 'Team 1' }; state.teams.push(t); p.team = t.id; }
+    const p = { id: uid(), name: draft.name.trim(), levels: draft.levels, team: addTeamId() };
     state.people.push(p);
     if (!state.viewerId) state.viewerId = p.id;
     save(); renderAll(); toast(`${p.name} added`);
@@ -1938,13 +1973,12 @@ Promise.all([
 
     window.__startNewMeeting = startNewMeeting;
 
-    if (window.__DEMO__ && (!hadSaved || !state.people.length)) {
-      // seed the worked example only for a first-time visitor — never stomp on
-      // a team someone has actually imported
-      window.__resetDemo = () => { loadExample(true); showTab('meeting'); };
-      window.__resetDemo();
+    // Seed the shipped teams for anyone opening this fresh — app or demo.
+    // Never stomp on a roster somebody has already imported or edited.
+    window.__resetDemo = () => { loadExample(true); showTab('meeting'); };
+    if (!hadSaved || !state.people.length) {
+      loadExample(true);
     } else {
-      if (window.__DEMO__) window.__resetDemo = () => { loadExample(true); showTab('meeting'); };
       renderAll();
     }
 

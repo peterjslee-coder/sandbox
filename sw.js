@@ -1,7 +1,12 @@
-/* Sandbox service worker — network-first so a push always wins,
-   cache as the offline fallback. Bump CACHE on any release. */
+/* Sandbox service worker.
+   GitHub Pages serves everything with Cache-Control: max-age=600 and gives no
+   way to change it, so a browser that has seen the site will happily show a
+   ten-minute-old build. GitHub *does* purge its CDN on every deploy — so the
+   fix is to stop the browser consulting its own HTTP cache and go to the CDN
+   every time. That is what cache:'reload' below does. The Cache Storage copy
+   is kept purely as the offline fallback. */
 
-const CACHE = 'sandbox-v7';
+const CACHE = 'sandbox-v9';
 
 const PRECACHE = [
   './',
@@ -23,7 +28,9 @@ const PRECACHE = [
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE)
-      .then((c) => Promise.allSettled(PRECACHE.map((u) => c.add(u))))
+      .then((c) => Promise.allSettled(
+        PRECACHE.map((u) => fetch(new Request(u, { cache: 'reload' })).then((r) => c.put(u, r))),
+      ))
       .then(() => self.skipWaiting()),
   );
 });
@@ -40,8 +47,11 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
 
+  // 'reload' skips the browser HTTP cache entirely and revalidates at the CDN
+  const fresh = new Request(req, { cache: 'reload', mode: req.mode === 'navigate' ? 'same-origin' : req.mode });
+
   e.respondWith(
-    fetch(req)
+    fetch(fresh)
       .then((res) => {
         const copy = res.clone();
         caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
