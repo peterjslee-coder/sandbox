@@ -7,14 +7,16 @@ registerSW('../../sw.js');
    State
    ============================================================ */
 
-const KEY = 'meetingFit.v2';
+const KEY = 'meetingFit.v3';
 
 let MODEL = null;
 let TYPES = [];
 const TIDX = {};
 
 const state = {
-  team: [],            // { id, name, levels }
+  teams: [],           // { id, name }
+  people: [],          // { id, name, levels, team }
+  teamFilter: 'all',   // which team the Team tab is showing
   meetings: [],        // { id, title, outcome, required[], attendees[], date, minutes, touched, debriefs{} }
   currentId: null,
   viewerId: null,
@@ -23,7 +25,7 @@ const state = {
 };
 
 const save = () => store.set(KEY, JSON.stringify({
-  team: state.team, meetings: state.meetings, currentId: state.currentId,
+  people: state.people, teams: state.teams, meetings: state.meetings, currentId: state.currentId,
   viewerId: state.viewerId, leaderId: state.leaderId, me: state.me,
 }));
 
@@ -34,9 +36,12 @@ function load() {
 }
 
 const uid = (p = 'p') => p + Math.random().toString(36).slice(2, 9);
-const byId = (id) => state.team.find((p) => p.id === id);
+const byId = (id) => state.people.find((p) => p.id === id);
+const teamById = (id) => state.teams.find((t) => t.id === id);
+const teamName = (p) => teamById(p.team)?.name || '—';
+const peopleOf = (teamId) => (teamId === 'all' ? state.people : state.people.filter((p) => p.team === teamId));
 const current = () => state.meetings.find((m) => m.id === state.currentId) || null;
-const viewer = () => byId(state.viewerId) || state.team[0] || null;
+const viewer = () => byId(state.viewerId) || state.people[0] || null;
 const isLeader = () => state.viewerId && state.viewerId === state.leaderId;
 
 const levelsOf = (p, tid) => p.levels[TIDX[tid]];
@@ -213,8 +218,8 @@ function mixBar(l) {
 const STATUS_LABEL = { good: 'Covered', warning: 'Thin', serious: 'Competency only', critical: 'Gap' };
 
 function analyze(m) {
-  const inRoom = state.team.filter((p) => m.attendees.includes(p.id));
-  const bench = state.team.filter((p) => !m.attendees.includes(p.id));
+  const inRoom = state.people.filter((p) => m.attendees.includes(p.id));
+  const bench = state.people.filter((p) => !m.attendees.includes(p.id));
   const required = (m.required || []).map(typeById).filter(Boolean);
 
   const coverage = required.map((type) => {
@@ -310,7 +315,8 @@ function reshape(a) {
 function verdictSentence(a) {
   if (!a.required.length) return 'Pick what the meeting needs and the read will appear here.';
   if (!a.inRoom.length) return 'Nobody is in the room yet. Add attendees to see whether the meeting matches them.';
-  const names = (arr) => arr.map((p) => p.name).join(', ');
+  const multi = new Set(a.inRoom.map((p) => p.team)).size > 1;
+  const names = (arr) => arr.map((p) => (multi ? `${p.name} (${teamName(p)})` : p.name)).join(', ');
 
   if (a.gaps.length) {
     const list = a.gaps.map((c) => c.type.name);
@@ -552,22 +558,60 @@ function renderAttendeePicker() {
   host.replaceChildren();
   const m = current();
   if (!m) return;
-  if (!state.team.length) {
-    host.append(el('div', { class: 'empty', text: 'No team yet. Add people on the Team tab, or load the example.' }));
+  if (!state.people.length) {
+    host.append(el('div', { class: 'empty', text: 'No people yet. Import a team on the Team tab.' }));
     return;
   }
-  for (const p of state.team) {
-    const cb = el('input', { type: 'checkbox', ...(m.attendees.includes(p.id) ? { checked: 'checked' } : {}) });
-    cb.addEventListener('change', () => {
-      const i = m.attendees.indexOf(p.id);
-      if (cb.checked && i < 0) m.attendees.push(p.id);
-      if (!cb.checked && i >= 0) m.attendees.splice(i, 1);
-      save(); renderMeeting(); renderDebrief(); renderLoad();
-    });
-    host.append(el('label', { class: 'checkline' }, [cb, el('div', {}, [
-      el('div', { class: 'cl-name', text: p.name }),
-      el('div', { class: 'cl-sub', text: geniusesOf(p).map((t) => t.name).join(' · ') }),
-    ])]));
+
+  // A meeting is not owned by a team — pick from all of them, grouped so it is
+  // obvious when you are reaching across.
+  const picked = state.people.filter((p) => m.attendees.includes(p.id));
+  const teamsUsed = [...new Set(picked.map((p) => p.team))];
+  host.append(el('p', {
+    class: 'hint', style: 'margin:0 0 12px',
+    text: picked.length
+      ? `${picked.length} in the room` + (teamsUsed.length > 1
+          ? ` — across ${teamsUsed.map((t) => teamById(t)?.name || '?').join(', ')}.`
+          : `, all ${teamById(teamsUsed[0])?.name || ''}.`)
+      : 'Nobody picked yet. Tick anyone, from any team.',
+  }));
+
+  for (const t of state.teams) {
+    const members = peopleOf(t.id);
+    if (!members.length) continue;
+    const inThis = members.filter((p) => m.attendees.includes(p.id)).length;
+
+    const group = el('div', { class: 'teamgroup' });
+    group.append(el('div', { class: 'tg-head' }, [
+      el('span', { class: 'tg-name', text: t.name }),
+      el('span', { class: 'tg-count', text: inThis ? `${inThis} of ${members.length}` : `${members.length}` }),
+      el('button', {
+        class: 'linkbtn', type: 'button',
+        text: inThis === members.length ? 'none' : 'all',
+        onclick: () => {
+          const ids = members.map((p) => p.id);
+          m.attendees = inThis === members.length
+            ? m.attendees.filter((id) => !ids.includes(id))
+            : [...new Set([...m.attendees, ...ids])];
+          save(); renderMeeting(); renderDebrief(); renderLoad();
+        },
+      }),
+    ]));
+
+    for (const p of members) {
+      const cb = el('input', { type: 'checkbox', ...(m.attendees.includes(p.id) ? { checked: 'checked' } : {}) });
+      cb.addEventListener('change', () => {
+        const i = m.attendees.indexOf(p.id);
+        if (cb.checked && i < 0) m.attendees.push(p.id);
+        if (!cb.checked && i >= 0) m.attendees.splice(i, 1);
+        save(); renderMeeting(); renderDebrief(); renderLoad();
+      });
+      group.append(el('label', { class: 'checkline' }, [cb, el('div', {}, [
+        el('div', { class: 'cl-name', text: p.name }),
+        el('div', { class: 'cl-sub', text: geniusesOf(p).map((x) => x.name).join(' · ') }),
+      ])]));
+    }
+    host.append(group);
   }
 }
 
@@ -688,7 +732,7 @@ function renderMoveBox(m, a) {
       ['To get this outcome, the room has to change.']));
     for (const pick of mr.picks) {
       box.append(el('div', {}, [
-        'Add ', el('strong', { text: pick.person.name }),
+        'Add ', el('strong', { text: `${pick.person.name} (${teamName(pick.person)})` }),
         ` — covers ${pick.covers.map((t) => t.name).join(' and ')}.`,
       ]));
     }
@@ -727,9 +771,9 @@ function renderMoveBox(m, a) {
   ]));
   if (rs.best && rs.best.score > 0) {
     box.append(el('div', { style: 'margin-top:8px' }, [
-      'What this room is actually built for: a ',
-      el('strong', { text: rs.best.ar.name.toLowerCase() }),
-      ` at ${rs.best.ar.altLabel} — ${rs.best.ar.example.toLowerCase()}.`,
+      'What this room is actually built for: the ',
+      el('strong', { text: rs.best.ar.name }),
+      ` shape at ${rs.best.ar.altLabel} — ${rs.best.ar.example.toLowerCase()}.`,
     ]));
   }
   box.append(el('div', { style: 'margin-top:8px' }, [
@@ -964,7 +1008,7 @@ function renderLeaderBlock(dates) {
   // that actually broke someone, so count days past the line, not weeks.
   let over = 0, heavy = 0, badDays = 0;
   const teamTot = { g: 0, c: 0, f: 0, minutes: 0 };
-  for (const p of state.team) {
+  for (const p of state.people) {
     let worst = 'fine';
     for (const d of dates) {
       const l = dayLoad(p, d);
@@ -981,7 +1025,7 @@ function renderLeaderBlock(dates) {
     el('div', { class: 'sp' }, [
       el('div', { class: 'sp-n', text: 'Past the line' }),
       el('div', { class: 'sp-v', style: over ? 'color:var(--status-critical)' : '', text: `${over}` }),
-      el('div', { class: 'sp-w', text: `of ${state.team.length} people had a day over ${pct(MODEL.load.thresholds.frustrationStrained)} draining — ${badDays} such day${badDays === 1 ? '' : 's'} this week` }),
+      el('div', { class: 'sp-w', text: `of ${state.people.length} people had a day over ${pct(MODEL.load.thresholds.frustrationStrained)} draining — ${badDays} such day${badDays === 1 ? '' : 's'} this week` }),
     ]),
     el('div', { class: 'sp' }, [
       el('div', { class: 'sp-n', text: 'Getting heavy' }),
@@ -995,7 +1039,7 @@ function renderLeaderBlock(dates) {
     .filter((m) => dates.includes(m.date))
     .map((m) => ({
       m,
-      f: state.team.filter((p) => m.attendees.includes(p.id)).reduce((s, p) => s + meetingSplit(p, m).f, 0),
+      f: state.people.filter((p) => m.attendees.includes(p.id)).reduce((s, p) => s + meetingSplit(p, m).f, 0),
     }))
     .filter((x) => x.f > 0)
     .sort((a, b) => b.f - a.f)
@@ -1082,7 +1126,7 @@ function renderDebrief() {
   wrap.append(form);
 
   /* observations */
-  const others = state.team.filter((p) => m.attendees.includes(p.id) && p.id !== v.id);
+  const others = state.people.filter((p) => m.attendees.includes(p.id) && p.id !== v.id);
   const obs = el('div', { class: 'card' }, [
     el('h2', { class: 'section-title', text: 'What you noticed about others' }),
   ]);
@@ -1133,7 +1177,7 @@ function renderDebriefSummary(m) {
     el('h2', { class: 'section-title', text: 'What the room reported' }),
   ]);
   const ds = Object.entries(m.debriefs || {}).filter(([pid]) => byId(pid));
-  const inRoom = state.team.filter((p) => m.attendees.includes(p.id));
+  const inRoom = state.people.filter((p) => m.attendees.includes(p.id));
 
   if (!ds.length) {
     card.append(el('div', { class: 'empty', text: `No debriefs in yet — ${inRoom.length} people to hear from.` }));
@@ -1189,27 +1233,47 @@ function renderDebriefSummary(m) {
    Team + profile panels
    ============================================================ */
 
+function renderTeamSwitcher() {
+  const host = document.getElementById('teamSwitch');
+  if (!host) return;
+  host.replaceChildren();
+  if (!state.teams.length) return;
+
+  const mk = (id, label, count) => el('button', {
+    class: 'teamchip', type: 'button', 'aria-pressed': String(state.teamFilter === id),
+    onclick: () => { state.teamFilter = id; save(); renderRoster(); renderTeamViz(); renderTeamSwitcher(); },
+  }, [label, el('span', { class: 'tc-count', text: String(count) })]);
+
+  for (const t of state.teams) host.append(mk(t.id, t.name, peopleOf(t.id).length));
+  host.append(mk('all', 'All', state.people.length));
+}
+
 function renderRoster() {
   const host = document.getElementById('roster');
   host.replaceChildren();
-  document.getElementById('teamCount').textContent = String(state.team.length);
-  document.getElementById('teamCount2').textContent = state.team.length ? `· ${state.team.length}` : '';
-  if (!state.team.length) {
-    host.append(el('div', { class: 'empty', text: 'Nobody yet. Paste a code, enter someone manually, or load the example.' }));
+  const shown = peopleOf(state.teamFilter);
+  document.getElementById('teamCount').textContent = String(state.people.length);
+  document.getElementById('teamCount2').textContent = shown.length ? `· ${shown.length}` : '';
+  if (!shown.length) {
+    host.append(el('div', { class: 'empty', text: 'Nobody on this team yet. Import one below.' }));
     return;
   }
-  for (const p of state.team) {
+  for (const p of shown) {
     host.append(el('div', { class: 'person' }, [
       el('div', {}, [
-        el('div', { class: 'pname' }, [p.name, p.id === state.leaderId ? el('span', { style: 'font-size:11px;color:var(--text-muted);font-weight:450', text: '  · runs the team' }) : null]),
+        el('div', { class: 'pname' }, [
+          p.name,
+          state.teamFilter === 'all' ? el('span', { class: 'teambadge', text: teamName(p) }) : null,
+          p.id === state.leaderId ? el('span', { style: 'font-size:11px;color:var(--text-muted);font-weight:450', text: ' · runs the team' }) : null,
+        ]),
         el('div', { class: 'pgen', text: geniusesOf(p).map((t) => t.name).join(' · ') }),
       ]),
       el('button', {
         class: 'pdel', type: 'button', text: 'Remove',
         onclick: () => {
-          state.team = state.team.filter((x) => x.id !== p.id);
+          state.people = state.people.filter((x) => x.id !== p.id);
           for (const m of state.meetings) m.attendees = m.attendees.filter((id) => id !== p.id);
-          if (state.viewerId === p.id) state.viewerId = state.team[0]?.id || null;
+          if (state.viewerId === p.id) state.viewerId = state.people[0]?.id || null;
           save(); renderAll();
         },
       }),
@@ -1220,16 +1284,18 @@ function renderRoster() {
 function renderTeamViz() {
   const host = document.getElementById('teamViz');
   host.replaceChildren();
-  if (!state.team.length) {
+  const roster = peopleOf(state.teamFilter);
+  const label = state.teamFilter === 'all' ? 'everyone' : teamById(state.teamFilter)?.name || '';
+  if (!roster.length) {
     host.append(el('div', { class: 'card' }, [el('div', { class: 'empty', text: 'The team picture appears once someone is on it.' })]));
     return;
   }
 
-  const counts = TYPES.map((t) => ({ t, n: state.team.filter((p) => levelsOf(p, t.id) === 'g').length }));
+  const counts = TYPES.map((t) => ({ t, n: roster.filter((p) => levelsOf(p, t.id) === 'g').length }));
   const max = Math.max(1, ...counts.map((c) => c.n));
   const bars = el('div', { class: 'bars' });
   for (const c of counts) {
-    bars.append(el('div', { class: 'bar-row', title: `${c.n} of ${state.team.length} energized by ${c.t.name}` }, [
+    bars.append(el('div', { class: 'bar-row', title: `${c.n} of ${roster.length} energized by ${c.t.name}` }, [
       el('div', { class: 'bl', text: c.t.name }),
       el('div', { class: 'bar-track' }, [el('div', {
         class: 'bar-fill' + (c.n === 0 ? ' zero' : ''),
@@ -1241,23 +1307,23 @@ function renderTeamViz() {
   const zero = counts.filter((c) => c.n === 0);
 
   host.append(el('div', { class: 'card' }, [
-    el('h2', { class: 'section-title', text: 'Where this team gains energy' }),
-    el('p', { style: 'font-size:13px;color:var(--text-secondary);margin:0 0 16px;line-height:1.55', text: `People energized by each type, out of ${state.team.length}.` }),
+    el('h2', { class: 'section-title', text: state.teamFilter === 'all' ? 'Where everyone gains energy' : `Where ${label} gains energy` }),
+    el('p', { style: 'font-size:13px;color:var(--text-secondary);margin:0 0 16px;line-height:1.55', text: `People energized by each type, out of ${roster.length} in ${label}.` }),
     bars,
     zero.length ? el('div', { class: 'fix' }, ['Nobody here is energized by ',
       el('strong', { text: zero.map((c) => c.t.name).join(' or ') }),
       '. Any meeting that needs it will stall at that point, every time, no matter who is in the room.']) : null,
     tableView(['Type', 'Phase', 'Mode', 'Energized', 'Drained'], TYPES.map((t) => [
       t.name, MODEL.phases.find((p) => p.id === t.phase).name, t.mode,
-      state.team.filter((p) => levelsOf(p, t.id) === 'g').length,
-      state.team.filter((p) => levelsOf(p, t.id) === 'f').length,
+      roster.filter((p) => levelsOf(p, t.id) === 'g').length,
+      roster.filter((p) => levelsOf(p, t.id) === 'f').length,
     ])),
   ]));
 
   const mx = el('div', { class: 'matrix', style: `grid-template-columns: minmax(96px, 1.4fr) repeat(${TYPES.length}, 1fr)` });
   mx.append(el('div', { class: 'mx-head' }));
   for (const t of TYPES) mx.append(el('div', { class: 'mx-head', text: t.short, title: `${t.name} — ${t.mode}, ${t.altLabel}` }));
-  for (const p of state.team) {
+  for (const p of roster) {
     mx.append(el('div', { class: 'mx-name', text: p.name }));
     for (const t of TYPES) {
       const lv = levelsOf(p, t.id);
@@ -1268,7 +1334,7 @@ function renderTeamViz() {
     }
   }
   host.append(el('div', { class: 'card' }, [
-    el('h2', { class: 'section-title', text: 'The team, cell by cell' }),
+    el('h2', { class: 'section-title', text: state.teamFilter === 'all' ? 'Everyone, cell by cell' : `${label}, cell by cell` }),
     el('div', { class: 'matrix-scroll' }, [mx]),
     el('div', { class: 'legend' }, MODEL.levels.map((l) => el('div', { class: 'lg' }, [el('span', { class: `sw ${l.id}` }), `${l.short} — ${l.name}`]))),
   ]));
@@ -1464,7 +1530,7 @@ function renderBulkPreview() {
       onclick: () => commitBulk(false),
     }),
     el('button', {
-      class: 'btn ghost', type: 'button', text: 'Replace team',
+      class: 'btn ghost', type: 'button', text: 'Replace this team',
       ...(ok.length ? {} : { disabled: 'disabled' }),
       onclick: () => commitBulk(true),
     }),
@@ -1474,22 +1540,34 @@ function renderBulkPreview() {
 function commitBulk(replace) {
   const picked = bulkRows.filter((r) => !r.problem && r._cb?.checked);
   if (!picked.length) return;
-  const people = picked.map((r) => ({ id: uid(), name: r.name, levels: r.levels }));
 
-  if (replace) {
-    state.team = people;
-    state.meetings.forEach((m) => { m.attendees = []; m.debriefs = {}; });
-    state.viewerId = people[0].id;
-    state.leaderId = people[0].id;
-  } else {
-    state.team.push(...people);
-    if (!state.viewerId) { state.viewerId = people[0].id; state.leaderId = people[0].id; }
+  const raw = (document.getElementById('bulkTeam').value || '').trim();
+  const label = raw || `Team ${state.teams.length + 1}`;
+  let team = state.teams.find((t) => t.name.toLowerCase() === label.toLowerCase());
+  if (!team) {
+    team = { id: label.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 24) || uid('t'), name: label };
+    if (state.teams.some((t) => t.id === team.id)) team.id = uid('t');
+    state.teams.push(team);
   }
 
+  const people = picked.map((r) => ({ id: uid(), name: r.name, levels: r.levels, team: team.id }));
+
+  if (replace) {
+    // replace only this team, never the others
+    const goneIds = peopleOf(team.id).map((p) => p.id);
+    state.people = state.people.filter((p) => p.team !== team.id);
+    state.meetings.forEach((m) => { m.attendees = m.attendees.filter((id) => !goneIds.includes(id)); });
+    if (goneIds.includes(state.viewerId)) state.viewerId = null;
+  }
+  state.people.push(...people);
+  if (!byId(state.viewerId)) state.viewerId = state.people[0]?.id || null;
+  if (!byId(state.leaderId)) state.leaderId = state.viewerId;
+
+  state.teamFilter = team.id;
   bulkRows = [];
   document.getElementById('bulkText').value = '';
   save(); renderAll();
-  toast(`${people.length} added${replace ? ' — team replaced' : ''}`);
+  toast(`${people.length} into ${team.name}${replace ? ' (replaced)' : ''}`);
 }
 
 /* ============================================================
@@ -1532,11 +1610,11 @@ function showTab(which) {
 function viewerBar(note) {
   const v = viewer();
   const sel = el('select', { 'aria-label': 'Whose view to show' });
-  for (const p of state.team) {
+  for (const p of state.people) {
     sel.append(el('option', { value: p.id, ...(p.id === state.viewerId ? { selected: 'selected' } : {}) },
       [p.name + (p.id === state.leaderId ? ' — runs the team' : '')]));
   }
-  if (!state.team.length) sel.append(el('option', { value: '' }, ['—']));
+  if (!state.people.length) sel.append(el('option', { value: '' }, ['—']));
   sel.addEventListener('change', (e) => {
     state.viewerId = e.target.value;
     save(); renderLoad(); renderDebrief();
@@ -1557,6 +1635,7 @@ function viewerBar(note) {
 }
 
 function renderAll() {
+  renderTeamSwitcher();
   renderMeeting();
   renderRoster();
   renderTeamViz();
@@ -1576,92 +1655,101 @@ function newMeeting(patch = {}) {
   };
 }
 
-function loadExample(quiet = false) {
-  const people = [
-    ['You',     'cgfgfc'],   // Invention + Discernment | drained by Galvanizing, Enablement
-    ['Marisol', 'gcgcff'],   // Wonder + Galvanizing
-    ['Dev',     'fccgfg'],   // Discernment + Tenacity
-    ['Anne',    'ffccgg'],   // Enablement + Tenacity
-    ['Ray',     'ggccff'],   // Wonder + Invention
-    ['Priya',   'ffgccg'],   // Galvanizing + Tenacity
-  ].filter(([, lv]) => validLevels(lv))
-    .map(([name, levels]) => ({ id: uid(), name, levels }));
+let SEED = null;
 
-  state.team = people;
-  const id = (n) => people.find((p) => p.name === n).id;
-  state.leaderId = id('You');
-  state.viewerId = id('You');
+function loadExample(quiet = false) {
+  if (!SEED) return;
+
+  state.teams = SEED.teams.map((t) => ({ id: t.id, name: t.name }));
+  state.people = [];
+  for (const t of SEED.teams) {
+    for (const per of t.people) {
+      state.people.push({ id: uid(), name: per.n, levels: per.l, team: t.id });
+    }
+  }
+  state.teamFilter = state.teams[0]?.id || 'all';
+
+  const pid = (team, name) => state.people.find((x) => x.team === team && x.name === name)?.id;
+  const me = pid('ssg', 'P.L.');
+  state.viewerId = me || state.people[0]?.id || null;
+  state.leaderId = state.viewerId;
 
   const [mon, tue, wed, thu, fri] = weekDates();
+  const ssg = (...names) => names.map((n) => pid('ssg', n)).filter(Boolean);
 
   state.meetings = [
     newMeeting({
-      title: 'Weekly staff rally', date: mon, minutes: 60, touched: true,
+      title: 'Weekly staff sync', date: mon, minutes: 60, touched: true, archetype: 'rally',
       outcome: 'Everyone leaves knowing the week\'s priorities and who owns what.',
       required: ['galvanizing', 'enablement', 'tenacity'],
-      attendees: people.map((p) => p.id),
+      attendees: state.people.filter((x) => x.team === 'ssg').map((x) => x.id),
     }),
     newMeeting({
       title: 'Concept down-select', date: mon, minutes: 90, touched: true,
       outcome: 'Narrow six concepts to three and write down why.',
       required: ['discernment', 'invention'],
-      attendees: [id('You'), id('Dev'), id('Ray')],
+      attendees: ssg('P.L.', 'K.M.', 'M.L.', 'B.M.'),
     }),
     newMeeting({
-      title: 'Daily standup', date: tue, minutes: 15, touched: true,
+      title: 'Daily standup', date: tue, minutes: 15, touched: true, archetype: 'task',
       outcome: 'Surface blockers before they cost a day.',
       required: ['tenacity', 'discernment'],
-      attendees: [id('Dev'), id('Anne'), id('Priya')],
+      attendees: ssg('N.P.', 'E.M.', 'A.H.'),
     }),
     newMeeting({
       title: '2040 portfolio review', date: tue, minutes: 90, touched: false,
       outcome: 'Decide which two concepts go forward, and get the chief engineer to commit resourcing.',
       required: ['invention', 'discernment', 'galvanizing'],
-      attendees: [id('You'), id('Dev'), id('Anne')],
+      attendees: ssg('P.L.', 'K.M.', 'M.L.'),
     }),
     newMeeting({
       title: 'Program sync — resourcing', date: wed, minutes: 60, touched: true,
       outcome: 'Unblock the three teams waiting on staffing.',
       required: ['enablement', 'tenacity'],
-      attendees: [id('You'), id('Anne'), id('Priya')],
+      attendees: ssg('P.L.', 'A.H.', 'B.B.'),
     }),
     newMeeting({
       title: 'Stakeholder alignment', date: wed, minutes: 90, touched: true,
       outcome: 'Get the two directorates behind the plan and supporting it out loud.',
       required: ['galvanizing', 'enablement'],
-      attendees: [id('You'), id('Marisol'), id('Priya')],
+      attendees: ssg('P.L.', 'A.H.', 'R.G.'),
     }),
     newMeeting({
       title: 'Supplier escalation', date: wed, minutes: 60, touched: true,
       outcome: 'Commit the supplier to a recovery schedule.',
       required: ['galvanizing', 'tenacity'],
-      attendees: [id('You'), id('Priya')],
+      attendees: ssg('P.L.', 'T.S.'),
     }),
     newMeeting({
-      title: 'Quarterly offsite prep', date: thu, minutes: 120, touched: true,
-      outcome: 'Explore where the portfolio could be wrong before we commit to it.',
-      required: ['wonder', 'invention'],
-      attendees: [id('You'), id('Ray'), id('Marisol')],
+      title: 'Cross-team integration review', date: thu, minutes: 120, touched: true,
+      outcome: 'Agree the integration sequence across SSG, ECS and GRS and name who finishes each piece.',
+      required: ['discernment', 'tenacity', 'enablement'],
+      attendees: [
+        ...ssg('P.L.', 'M.L.'),
+        pid('ecs', 'C.F.'), pid('ecs', 'P.C.'),
+        pid('grs', 'G.M.'), pid('grs', 'P.Y.'),
+      ].filter(Boolean),
     }),
     newMeeting({
-      title: 'Closeout review', date: fri, minutes: 45, touched: true,
+      title: 'Closeout review', date: fri, minutes: 45, touched: true, archetype: 'task',
       outcome: 'Finish the milestone package and ship it.',
       required: ['tenacity', 'discernment'],
-      attendees: [id('Dev'), id('Anne'), id('Priya')],
+      attendees: [...ssg('N.P.', 'E.M.'), pid('ecs', 'C.F.')].filter(Boolean),
     }),
   ];
 
-  // a couple of debriefs already in, so the loop is visible
-  const wedAlign = state.meetings.find((m) => m.title === 'Stakeholder alignment');
-  wedAlign.debriefs = {
-    [id('You')]: { felt: 'draining', outcome: 'partly', note: 'I should not have run this one. Marisol should have.', obs: { [id('Marisol')]: ['carried', 'underused'] } },
-    [id('Marisol')]: { felt: 'energizing', outcome: 'partly', note: 'Happy to take the front on these.', obs: { [id('You')]: ['drained'] } },
-  };
+  const align = state.meetings.find((m) => m.title === 'Stakeholder alignment');
+  if (align && me) {
+    align.debriefs = {
+      [me]: { felt: 'draining', outcome: 'partly', note: 'I should not have run this one.', obs: { [pid('ssg', 'A.H.')]: ['carried', 'underused'] } },
+      [pid('ssg', 'A.H.')]: { felt: 'energizing', outcome: 'partly', note: 'Happy to take the front on these.', obs: { [me]: ['drained'] } },
+    };
+  }
 
   state.currentId = state.meetings.find((m) => m.title === '2040 portfolio review').id;
 
   save(); renderAll();
-  if (!quiet) toast(`Example loaded — ${people.length} people, ${state.meetings.length} meetings`);
+  if (!quiet) toast(`Loaded ${state.teams.length} teams, ${state.people.length} people`);
 }
 
 /* ============================================================
@@ -1702,8 +1790,10 @@ function wire() {
   });
 
   document.getElementById('meAddBtn').addEventListener('click', () => {
-    const p = { id: uid(), name: state.me.name.trim(), levels: state.me.levels };
-    state.team.push(p);
+    const p = { id: uid(), name: state.me.name.trim(), levels: state.me.levels,
+      team: state.teamFilter === 'all' ? (state.teams[0]?.id || null) : state.teamFilter };
+    if (!p.team) { const t = { id: 'team-1', name: 'Team 1' }; state.teams.push(t); p.team = t.id; }
+    state.people.push(p);
     if (!state.viewerId) state.viewerId = p.id;
     save(); renderAll(); showTab('team'); toast('Added to the team');
   });
@@ -1712,7 +1802,9 @@ function wire() {
     const input = document.getElementById('pasteCode');
     const p = decodeProfile(input.value);
     if (!p) { toast('That code did not read — check it was copied whole'); return; }
-    state.team.push(p);
+    p.team = state.teamFilter === 'all' ? (state.teams[0]?.id || null) : state.teamFilter;
+    if (!p.team) { const t = { id: 'team-1', name: 'Team 1' }; state.teams.push(t); p.team = t.id; }
+    state.people.push(p);
     if (!state.viewerId) state.viewerId = p.id;
     input.value = '';
     save(); renderAll(); toast(`${p.name} added`);
@@ -1744,7 +1836,7 @@ function wire() {
   });
 
   document.getElementById('shareTeamBtn').addEventListener('click', async () => {
-    const url = `${location.origin}${location.pathname}#team=${encodeState(state.team.map((p) => [p.name, p.levels]))}`;
+    const url = `${location.origin}${location.pathname}#team=${encodeState(state.people.map((p) => [p.name, p.levels, teamName(p)]))}`;
     toast(await copyText(url) ? 'Team link copied' : 'Could not copy the link');
   });
 
@@ -1790,8 +1882,10 @@ function renderManual() {
 
   addBtn.addEventListener('click', () => {
     if (!validLevels(draft.levels) || !draft.name.trim()) return;
-    const p = { id: uid(), name: draft.name.trim(), levels: draft.levels };
-    state.team.push(p);
+    const p = { id: uid(), name: draft.name.trim(), levels: draft.levels,
+      team: state.teamFilter === 'all' ? (state.teams[0]?.id || null) : state.teamFilter };
+    if (!p.team) { const t = { id: 'team-1', name: 'Team 1' }; state.teams.push(t); p.team = t.id; }
+    state.people.push(p);
     if (!state.viewerId) state.viewerId = p.id;
     save(); renderAll(); toast(`${p.name} added`);
     draft.name = ''; draft.levels = 'c'.repeat(TYPES.length); nameInput.value = ''; paint();
@@ -1804,10 +1898,17 @@ function importFromHash() {
   if (!m) return;
   const raw = decodeState(m[1]);
   if (!Array.isArray(raw)) return;
-  const people = raw.filter((r) => Array.isArray(r) && validLevels(r[1]))
-    .map(([name, levels]) => ({ id: uid(), name: String(name).slice(0, 40), levels }));
+  const rows = raw.filter((r) => Array.isArray(r) && validLevels(r[1]));
+  const teams = [...new Set(rows.map((r) => r[2] || 'Team 1'))]
+    .map((n) => ({ id: String(n).toLowerCase().replace(/[^a-z0-9]+/g, '-') || uid('t'), name: String(n) }));
+  const people = rows.map(([name, levels, tn]) => ({
+    id: uid(), name: String(name).slice(0, 40), levels,
+    team: teams.find((t) => t.name === (tn || 'Team 1'))?.id || teams[0]?.id,
+  }));
   if (people.length) {
-    state.team = people;
+    state.teams = teams;
+    state.people = people;
+    state.teamFilter = teams[0]?.id || 'all';
     state.viewerId = people[0].id;
     state.meetings = [];
     save();
@@ -1820,9 +1921,12 @@ function importFromHash() {
    Boot
    ============================================================ */
 
-fetch('./model.json')
-  .then((r) => r.json())
-  .then((m) => {
+Promise.all([
+  fetch('./model.json').then((r) => r.json()),
+  fetch('./seed.json').then((r) => r.json()).catch(() => ({ teams: [] })),
+])
+  .then(([m, seed]) => {
+    SEED = seed;
     MODEL = m;
     TYPES = m.types;
     TYPES.forEach((t, i) => { TIDX[t.id] = i; });
@@ -1834,7 +1938,7 @@ fetch('./model.json')
 
     window.__startNewMeeting = startNewMeeting;
 
-    if (window.__DEMO__ && (!hadSaved || !state.team.length)) {
+    if (window.__DEMO__ && (!hadSaved || !state.people.length)) {
       // seed the worked example only for a first-time visitor — never stomp on
       // a team someone has actually imported
       window.__resetDemo = () => { loadExample(true); showTab('meeting'); };

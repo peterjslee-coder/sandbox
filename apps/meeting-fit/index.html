@@ -110,7 +110,12 @@
   <section class="panel" id="panel-team" role="tabpanel" aria-labelledby="tab-team" hidden>
     <div class="cols rev">
 
-      <div class="stack" id="teamViz"></div>
+      <div class="stack">
+        <div class="teamswitch-wrap">
+          <div class="teamswitch" id="teamSwitch"></div>
+        </div>
+        <div class="stack" id="teamViz"></div>
+      </div>
 
       <div class="stack">
         <div class="card">
@@ -118,7 +123,7 @@
           <div id="roster"></div>
           <div class="row" style="margin-top:16px">
             <button class="btn ghost" id="shareTeamBtn" type="button">Copy team link</button>
-            <button class="btn ghost" id="demoBtn" type="button">Load example team</button>
+            <button class="btn ghost" id="demoBtn" type="button">Reload all teams</button>
           </div>
         </div>
 
@@ -138,6 +143,11 @@
 
         <div class="card">
           <h2 class="section-title">Import a whole team</h2>
+          <label class="field">
+            <span>Team name</span>
+            <input type="text" id="bulkTeam" placeholder="SSG" autocomplete="off">
+            <p class="hint">Type an existing name to add to that team, or a new one to create it. People keep their team; a meeting can pull from any of them.</p>
+          </label>
           <label class="field">
             <span>Paste everyone's results</span>
             <textarea id="bulkText" rows="6" placeholder="Marisol Reyes — Genius: Wonder, Galvanizing; Frustration: Enablement, Tenacity"></textarea>

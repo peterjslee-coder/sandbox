@@ -1,7 +1,7 @@
 /* Sandbox service worker — network-first so a push always wins,
    cache as the offline fallback. Bump CACHE on any release. */
 
-const CACHE = 'sandbox-v6';
+const CACHE = 'sandbox-v7';
 
 const PRECACHE = [
   './',
@@ -15,6 +15,7 @@ const PRECACHE = [
   './apps/meeting-fit/app.css',
   './apps/meeting-fit/app.js',
   './apps/meeting-fit/model.json',
+  './apps/meeting-fit/seed.json',
   './demo/',
   './demo/index.html',
 ];

@@ -1,0 +1,138 @@
+{
+ "teams": [
+  {
+   "id": "ssg",
+   "name": "SSG",
+   "people": [
+    {
+     "n": "A.H.",
+     "l": "ffgcgc"
+    },
+    {
+     "n": "B.B.",
+     "l": "cgcfgf"
+    },
+    {
+     "n": "B.M.",
+     "l": "gfcgfc"
+    },
+    {
+     "n": "E.M.",
+     "l": "gffgcc"
+    },
+    {
+     "n": "E.V.",
+     "l": "fggcfc"
+    },
+    {
+     "n": "K.M.",
+     "l": "cgfgcf"
+    },
+    {
+     "n": "M.L.",
+     "l": "cgcgff"
+    },
+    {
+     "n": "N.P.",
+     "l": "gffgcc"
+    },
+    {
+     "n": "P.L.",
+     "l": "cgfgfc"
+    },
+    {
+     "n": "R.G.",
+     "l": "gcgcff"
+    },
+    {
+     "n": "T.S.",
+     "l": "gfgfcc"
+    }
+   ]
+  },
+  {
+   "id": "ecs",
+   "name": "ECS",
+   "people": [
+    {
+     "n": "C.M.",
+     "l": "fgcgcf"
+    },
+    {
+     "n": "C.F.",
+     "l": "cffgcg"
+    },
+    {
+     "n": "J.S.",
+     "l": "cgcgff"
+    },
+    {
+     "n": "K.H.",
+     "l": "gfcfgc"
+    },
+    {
+     "n": "K.S.",
+     "l": "cffcgg"
+    },
+    {
+     "n": "N.M.",
+     "l": "cgfgfc"
+    },
+    {
+     "n": "P.C.",
+     "l": "ffcgcg"
+    },
+    {
+     "n": "R.R.",
+     "l": "fgcgcf"
+    },
+    {
+     "n": "R.B.",
+     "l": "gccffg"
+    }
+   ]
+  },
+  {
+   "id": "grs",
+   "name": "GRS",
+   "people": [
+    {
+     "n": "B.B.",
+     "l": "ccffgg"
+    },
+    {
+     "n": "B.G.",
+     "l": "cffcgg"
+    },
+    {
+     "n": "G.R.",
+     "l": "ccfggf"
+    },
+    {
+     "n": "G.M.",
+     "l": "ffcggc"
+    },
+    {
+     "n": "J.S.",
+     "l": "cffgcg"
+    },
+    {
+     "n": "N.M.",
+     "l": "fggcfc"
+    },
+    {
+     "n": "N.D.",
+     "l": "fcggcf"
+    },
+    {
+     "n": "P.Y.",
+     "l": "cffcgg"
+    },
+    {
+     "n": "R.G.",
+     "l": "ffcggc"
+    }
+   ]
+  }
+ ]
+}

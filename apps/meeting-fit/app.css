@@ -579,3 +579,37 @@ details.tableview[open] summary::before { content: '▾ '; }
   font: inherit; font-size: inherit; color: var(--series-1); text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+/* ---------- teams ---------- */
+
+.teamswitch-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.teamswitch-wrap::-webkit-scrollbar { display: none; }
+.teamswitch { display: flex; gap: 7px; padding-bottom: 2px; }
+.teamchip {
+  appearance: none; cursor: pointer; font: inherit; flex: none;
+  display: flex; align-items: center; gap: 7px;
+  border: 1px solid var(--border); background: var(--surface-1);
+  color: var(--text-secondary); border-radius: 999px;
+  padding: 0 14px; min-height: 40px; font-size: 14px; font-weight: 600;
+}
+.teamchip[aria-pressed="true"] {
+  border-color: var(--series-1); color: #fff; background: var(--series-1);
+}
+.teamchip .tc-count {
+  font-size: 11.5px; font-weight: 650; border-radius: 999px;
+  padding: 1px 7px; background: var(--surface-2); color: var(--text-muted);
+}
+.teamchip[aria-pressed="true"] .tc-count { background: rgba(255,255,255,0.22); color: #fff; }
+
+.teambadge {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--series-1); margin-left: 7px;
+}
+
+.teamgroup { margin-bottom: 6px; }
+.tg-head {
+  display: flex; align-items: baseline; gap: 9px;
+  padding: 12px 0 6px; border-bottom: 1px solid var(--gridline); margin-bottom: 2px;
+}
+.tg-name { font-size: 12px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-primary); }
+.tg-count { font-size: 12px; color: var(--text-muted); flex: 1; }
